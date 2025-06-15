@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+      provider = "postgresql"
+      url      = env("DATABASE_URL")
+}
+
+// Quando gerar o banco de dados com o postgress, o nome da tabela deve ser o mesmo nome do model.
+// Caso contrário, o prisma não irá gerar o banco de dados.
+//Quando gerar uma nova tabela, executar o comando: npx prisma migrate dev --name init
+
+model user { // Cria tabela de usuário
+  id      String   @id @default(cuid()) @unique
+  name    String
+  email   String   @unique
+  password String
+}
+
+model painel { // Cadastra painel
+  id      String   @id @default(cuid()) @unique
+  name    String
+  layoutTelaCheia   Boolean @default(true)
+  dateCreated DateTime @default(now())
+  dateUpdated DateTime @updatedAt @default(now())
+  user_id String @unique
+}
+
+model painel_item { // Cadastra item do painel ou midias
+  id  String   @id @default(cuid()) @unique
+  
+
+
+// caso queira usar o Mongo, descomentar o código abaixo e comentar o código acima.
+
+// model user {  // se usar Mongo
+//   id      String   @id @default(auto()) @map("_id") @db.ObjectId 
+//   email   String   @unique 
+//   name    String
+//   password String
+  
+// }
+
+// datasource db {
+//   provider = "mongodb"
+//   url      = env("DATABASE_URL") 
+// }

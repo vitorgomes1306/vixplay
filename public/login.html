@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login e Cadastro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 300px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .toggle-form {
+            margin-top: 15px;
+            color: #007bff;
+            cursor: pointer;
+        }
+        .toggle-form:hover {
+            text-decoration: underline;
+        }
+        .hidden {
+            display: none;
+        }
+        .message {
+            margin-top: 10px;
+            font-size: 14px;
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Formulário de Login -->
+        <div id="loginFormContainer">
+            <img src="./img/logo_fundo_branco.png" alt="" width="200px">
+            <br>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    
+                    <input type="email" id="loginEmail" name="email" required placeholder="Digite seu email">
+                </div>
+                <div class="form-group">
+                   
+                    <input type="password" id="loginPassword" name="password" required placeholder="Digite sua senha">
+                </div>
+                <button type="submit">Entrar</button>
+            </form>
+            <div id="loginMessage" class="message"></div>
+            <div class="toggle-form" onclick="toggleForms()">Não tem uma conta? Cadastre-se</div>
+        </div>
+
+        <!-- Formulário de Cadastro -->
+        <div id="cadastroFormContainer" class="hidden">
+            <h2>Cadastro</h2>
+            <form id="cadastroForm">
+                <div class="form-group">
+                   
+                    <input type="text" id="cadastroName" name="name" required placeholder="Digite seu nome">
+                </div>
+                <div class="form-group">
+                   
+                    <input type="email" id="cadastroEmail" name="email" required placeholder="Digite seu email">
+                </div>
+                <div class="form-group">
+                    
+                    <input type="password" id="cadastroPassword" name="password" required placeholder="Digite sua senha">
+                </div>
+                <button type="submit">Cadastrar</button>
+            </form>
+            <div id="cadastroMessage" class="message"></div>
+            <div class="toggle-form" onclick="toggleForms()">Já tem uma conta? Faça login</div>
+        </div>
+    </div>
+
+    <script>
+        function toggleForms() {
+            document.getElementById('loginFormContainer').classList.toggle('hidden');
+            document.getElementById('cadastroFormContainer').classList.toggle('hidden');
+        }
+
+        // Função para enviar formulário de login
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const messageDiv = document.getElementById('loginMessage');
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
+                const data = await response.json();
+                messageDiv.textContent = data.message;
+                if (response.status === 200) {
+                    messageDiv.classList.remove('error');
+                } else {
+                    messageDiv.classList.add('error');
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Erro ao fazer login';
+                messageDiv.classList.add('error');
+            }
+        });
+
+        // Função para enviar formulário de cadastro
+        document.getElementById('cadastroForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('cadastroName').value;
+            const email = document.getElementById('cadastroEmail').value;
+            const password = document.getElementById('cadastroPassword').value;
+            const messageDiv = document.getElementById('cadastroMessage');
+
+            try {
+                const response = await fetch('/cadastro', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, email, password }),
+                });
+                const data = await response.json();
+                if (response.status === 201) {
+                    messageDiv.textContent = 'Usuário cadastrado com sucesso!';
+                    messageDiv.classList.remove('error');
+                } else {
+                    messageDiv.textContent = data.error || 'Erro ao cadastrar';
+                    messageDiv.classList.add('error');
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Erro ao cadastrar';
+                messageDiv.classList.add('error');
+            }
+        });
+    </script>
+</body>
+</html>
