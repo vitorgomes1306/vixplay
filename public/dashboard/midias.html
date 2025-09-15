@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mídias - VixMídia</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="modern-dashboard.css">
+    
+    <style>
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-online { background-color: #28a745; }
+        .status-offline { background-color: #dc3545; }
+        .status-active { background-color: #007bff; }
+        .status-inactive { background-color: #6c757d; }
+        
+        .media-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .media-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .media-preview {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f8f9fa;
+        }
+        
+        .media-type-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.75rem;
+        }
+        
+        .custom-content-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+        }
+        
+        .custom-content-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .tab-content {
+            min-height: 500px;
+        }
+        
+        .loading-spinner {
+            display: none;
+        }
+        
+        .no-content {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .stats-container {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+  <!-- Overlay para sidebar em dispositivos móveis -->
+  <div class="sidebar-overlay"></div>
+
+  <div class="wrapper">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <img src="../img/vixmidia_dark.png" alt="Logo VixMídia" class="img-fluid">
+        <button class="sidebar-toggle">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+      </div>
+      
+      <ul class="list-unstyled">
+        <li>
+          <a class="sidebar-link" href="index.html">
+            <i class="bi bi-house"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="dispositivos.html">
+            <i class="bi bi-tv"></i>
+            <span>Dispositivos</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="panels.html">
+            <i class="bi bi-pip-fill"></i>
+            <span>Painéis</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link active" href="midias.html">
+            <i class="bi bi-collection-play"></i>
+            <span>Mídias</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="clients.html">
+            <i class="bi bi-person-video2"></i>
+            <span>Clientes</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="relatorios.html">
+            <i class="bi bi-clipboard2-pulse"></i>
+            <span>Relatórios</span>
+          </a>
+        </li>
+      </ul>
+
+      <hr>
+
+      <ul class="list-unstyled">
+        <li>
+          <a class="sidebar-link" href="configuracoes.html">
+            <i class="bi bi-gear"></i>
+            <span>Configurações</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="#" id="logoutBtnSidebar">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Sair</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-footer">
+        <div class="d-flex align-items-center">
+          <div class="sidebar-user-icon">
+            <i class="bi bi-person-circle"></i>
+          </div>
+          <div class="sidebar-user-info">
+            <span id="userName">Usuário</span>
+          </div>
+        </div>
+        <div class="theme-toggle">
+           <i class="bi bi-sun-fill"></i>
+           <div class="form-check form-switch d-inline-block ms-1 me-1">
+             <input class="form-check-input" type="checkbox" id="themeSwitch">
+             <label class="form-check-label" for="themeSwitch"></label>
+           </div>
+           <i class="bi bi-moon-fill"></i>
+         </div>
+      </div>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <main class="content">
+        <!-- Header -->
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="page-title">
+                        <i class="bi bi-collection-play text-primary"></i>
+                        Mídias
+                    </h1>
+                    <p class="page-subtitle">Gerencie suas mídias e conteúdos customizados</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary" onclick="window.history.back()">
+                        <i class="bi bi-arrow-left"></i> Voltar
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="location.reload()">
+                        <i class="bi bi-arrow-clockwise"></i> Atualizar
+                    </button>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadMediaModal">
+                        <i class="bi bi-cloud-upload"></i> Upload Mídia
+                    </button>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCustomContentModal">
+                        <i class="bi bi-plus-circle"></i> Novo Conteúdo
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <!-- Tabs -->
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="mediaTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="medias-tab" data-bs-toggle="tab" data-bs-target="#medias" type="button" role="tab">
+                            <i class="bi bi-collection-play"></i> Minhas Mídias
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="custom-content-tab" data-bs-toggle="tab" data-bs-target="#custom-content" type="button" role="tab">
+                            <i class="bi bi-file-earmark-text"></i> Conteúdos Customizados
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="mediaTabContent">
+                    <!-- Aba Mídias -->
+                    <div class="tab-pane fade show active" id="medias" role="tabpanel">
+                        <!-- Stats Container -->
+                        <div class="stats-container mb-4" id="mediasStatsContainer">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="stats-card">
+                                        <div class="stats-icon bg-primary">
+                                            <i class="bi bi-collection-play"></i>
+                                        </div>
+                                        <div class="stats-content">
+                                            <div class="stats-label">Total de Mídias</div>
+                                            <div class="stats-value" id="totalMedias">0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search and Filters -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="search-container">
+                                    <input type="text" class="form-control search-input" id="searchMedias" placeholder="Buscar mídias por título, tipo...">
+                                    <i class="bi bi-search search-icon"></i>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="filterMediaType">
+                                    <option value="">Todos os tipos</option>
+                                    <option value="PHOTO">Foto</option>
+                                    <option value="VIDEO">Vídeo</option>
+                                    <option value="RSS">RSS</option>
+                                    <option value="WEATHER">Clima</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Loading Indicator -->
+                        <div class="loading-spinner text-center py-5" id="mediasLoadingIndicator">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Carregando mídias...</p>
+                        </div>
+
+                        <!-- No Content Message -->
+                        <div class="no-content" id="noMedias">
+                            <i class="bi bi-collection-play" style="font-size: 4rem; color: #dee2e6;"></i>
+                            <h4 class="mt-3">Nenhuma mídia encontrada</h4>
+                            <p>Faça upload de suas primeiras mídias para começar.</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadMediaModal">
+                                <i class="bi bi-cloud-upload"></i> Upload Mídia
+                            </button>
+                        </div>
+
+                        <!-- Medias Grid -->
+                        <div class="row" id="mediasContainer">
+                            <!-- Mídias serão carregadas aqui via JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Aba Conteúdos Customizados -->
+                    <div class="tab-pane fade" id="custom-content" role="tabpanel">
+                        <!-- Stats Container -->
+                        <div class="stats-container mb-4" id="customContentStatsContainer">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="stats-card">
+                                        <div class="stats-icon bg-success">
+                                            <i class="bi bi-file-earmark-text"></i>
+                                        </div>
+                                        <div class="stats-content">
+                                            <div class="stats-label">Conteúdos Customizados</div>
+                                            <div class="stats-value" id="totalCustomContent">0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="search-container">
+                                    <input type="text" class="form-control search-input" id="searchCustomContent" placeholder="Buscar conteúdos por título...">
+                                    <i class="bi bi-search search-icon"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Loading Indicator -->
+                        <div class="loading-spinner text-center py-5" id="customContentLoadingIndicator">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Carregando conteúdos customizados...</p>
+                        </div>
+
+                        <!-- No Content Message -->
+                        <div class="no-content" id="noCustomContent">
+                            <i class="bi bi-file-earmark-text" style="font-size: 4rem; color: #dee2e6;"></i>
+                            <h4 class="mt-3">Nenhum conteúdo customizado encontrado</h4>
+                            <p>Crie seus primeiros conteúdos customizados para usar nos painéis.</p>
+                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCustomContentModal">
+                                <i class="bi bi-plus-circle"></i> Novo Conteúdo
+                            </button>
+                        </div>
+
+                        <!-- Custom Content List -->
+                        <div class="row" id="customContentContainer">
+                            <!-- Conteúdos customizados serão carregados aqui via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+  </div>
+
+    <!-- Modal Upload Mídia -->
+    <div class="modal fade" id="uploadMediaModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-cloud-upload"></i> Upload de Mídia</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadMediaForm">
+                        <div class="mb-3">
+                            <label for="mediaFile" class="form-label">Arquivo</label>
+                            <input type="file" class="form-control" id="mediaFile" accept="image/*,video/*" required>
+                            <div class="form-text">Formatos aceitos: JPG, PNG, GIF, MP4, AVI, MOV (máx. 100MB)</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mediaTitle" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="mediaTitle" placeholder="Digite o título da mídia">
+                        </div>
+                        <div class="mb-3">
+                            <label for="mediaDuration" class="form-label">Duração (segundos)</label>
+                            <input type="number" class="form-control" id="mediaDuration" min="1" placeholder="Ex: 30">
+                            <div class="form-text">Tempo de exibição da mídia no painel</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mediaPanel" class="form-label">Painel</label>
+                            <select class="form-select" id="mediaPanel" required>
+                                <option value="">Selecione um painel</option>
+                                <!-- Painéis serão carregados via JavaScript -->
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="uploadMedia()">Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Adicionar Conteúdo Customizado -->
+    <div class="modal fade" id="addCustomContentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Novo Conteúdo Customizado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addCustomContentForm">
+                        <div class="mb-3">
+                            <label for="customContentTitle" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="customContentTitle" required placeholder="Digite o título do conteúdo">
+                        </div>
+                        <div class="mb-3">
+                            <label for="customContentContent" class="form-label">Conteúdo HTML</label>
+                            <textarea class="form-control" id="customContentContent" rows="10" required placeholder="Digite o conteúdo HTML personalizado..."></textarea>
+                            <div class="form-text">Use HTML, CSS e JavaScript para criar seu conteúdo personalizado</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="addCustomContent()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Conteúdo Customizado -->
+    <div class="modal fade" id="editCustomContentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil"></i> Editar Conteúdo Customizado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editCustomContentForm">
+                        <input type="hidden" id="editCustomContentId">
+                        <div class="mb-3">
+                            <label for="editCustomContentTitle" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="editCustomContentTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCustomContentContent" class="form-label">Conteúdo HTML</label>
+                            <textarea class="form-control" id="editCustomContentContent" rows="10" required></textarea>
+                            <div class="form-text">Use HTML, CSS e JavaScript para criar seu conteúdo personalizado</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="updateCustomContent()">Atualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        const API_BASE_URL = 'http://45.172.160.51:4000/public';
+        
+        // Função para obter o token de autenticação
+        function getAuthToken() {
+            return localStorage.getItem('token');
+        }
+        
+        // Função para verificar autenticação
+        function checkAuth() {
+            const token = getAuthToken();
+            if (!token) {
+                window.location.href = '../login.html';
+                return false;
+            }
+            return true;
+        }
+        
+        // Função para exibir alertas
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertId = 'alert-' + Date.now();
+            
+            const alertHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" id="${alertId}" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+            
+            // Auto-remove após 5 segundos
+            setTimeout(() => {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+        
+        // Função para carregar mídias
+        async function carregarMedias() {
+            const loadingIndicator = document.getElementById('mediasLoadingIndicator');
+            const statsContainer = document.getElementById('mediasStatsContainer');
+            const noMedias = document.getElementById('noMedias');
+            const mediasContainer = document.getElementById('mediasContainer');
+            const totalMedias = document.getElementById('totalMedias');
+            
+            // Mostrar loading
+            loadingIndicator.style.display = 'block';
+            statsContainer.style.display = 'none';
+            noMedias.style.display = 'none';
+            totalMedias.textContent = '0';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/medias`, {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar mídias');
+                }
+                
+                const medias = await response.json();
+                
+                // Ocultar loading
+                loadingIndicator.style.display = 'none';
+                
+                if (medias.length === 0) {
+                    noMedias.style.display = 'block';
+                    statsContainer.style.display = 'none';
+                } else {
+                    statsContainer.style.display = 'block';
+                    totalMedias.textContent = medias.length;
+                    renderMedias(medias);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar mídias:', error);
+                loadingIndicator.style.display = 'none';
+                statsContainer.style.display = 'none';
+                noMedias.style.display = 'none';
+                showAlert('Erro ao carregar mídias: ' + error.message, 'danger');
+            }
+        }
+        
+        // Função para renderizar mídias
+        function renderMedias(medias) {
+            const container = document.getElementById('mediasContainer');
+            container.innerHTML = '';
+            
+            medias.forEach(media => {
+                const mediaCard = `
+                    <div class="col-md-4 col-lg-3 mb-4 media-item" data-title="${media.title || ''}" data-type="${media.type}">
+                        <div class="card media-card h-100">
+                            <div class="position-relative">
+                                ${getMediaPreview(media)}
+                                <span class="badge bg-primary media-type-badge">${getMediaTypeLabel(media.type)}</span>
+                            </div>
+                            <div class="card-body">
+                                <h6 class="card-title">${media.title || 'Sem título'}</h6>
+                                <p class="card-text text-muted small">
+                                    <i class="bi bi-clock"></i> ${media.duration || 'N/A'}s
+                                    <br>
+                                    <i class="bi bi-calendar"></i> ${formatDate(media.createdAt)}
+                                </p>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <div class="btn-group w-100" role="group">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="viewMedia(${media.id})">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="deleteMedia(${media.id})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', mediaCard);
+            });
+        }
+        
+        // Função para obter preview da mídia
+        function getMediaPreview(media) {
+            if (media.type === 'PHOTO') {
+                return `<img src="${media.url}" class="media-preview" alt="${media.title || 'Mídia'}">`;
+            } else if (media.type === 'VIDEO') {
+                return `<video class="media-preview" controls><source src="${media.url}" type="video/mp4"></video>`;
+            } else {
+                return `<div class="media-preview d-flex align-items-center justify-content-center bg-light">
+                    <i class="bi bi-file-earmark" style="font-size: 3rem; color: #6c757d;"></i>
+                </div>`;
+            }
+        }
+        
+        // Função para obter label do tipo de mídia
+        function getMediaTypeLabel(type) {
+            const labels = {
+                'PHOTO': 'Foto',
+                'VIDEO': 'Vídeo',
+                'RSS': 'RSS',
+                'WEATHER': 'Clima'
+            };
+            return labels[type] || type;
+        }
+        
+        // Função para carregar conteúdos customizados
+        async function carregarCustomContent() {
+            const loadingIndicator = document.getElementById('customContentLoadingIndicator');
+            const statsContainer = document.getElementById('customContentStatsContainer');
+            const noCustomContent = document.getElementById('noCustomContent');
+            const customContentContainer = document.getElementById('customContentContainer');
+            const totalCustomContent = document.getElementById('totalCustomContent');
+            
+            // Mostrar loading
+            loadingIndicator.style.display = 'block';
+            statsContainer.style.display = 'none';
+            noCustomContent.style.display = 'none';
+            totalCustomContent.textContent = '0';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/custom-screens`, {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar conteúdos customizados');
+                }
+                
+                const customContents = await response.json();
+                
+                // Ocultar loading
+                loadingIndicator.style.display = 'none';
+                
+                if (customContents.length === 0) {
+                    noCustomContent.style.display = 'block';
+                    statsContainer.style.display = 'none';
+                } else {
+                    statsContainer.style.display = 'block';
+                    totalCustomContent.textContent = customContents.length;
+                    renderCustomContent(customContents);
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar conteúdos customizados:', error);
+                loadingIndicator.style.display = 'none';
+                statsContainer.style.display = 'none';
+                noCustomContent.style.display = 'none';
+                showAlert('Erro ao carregar conteúdos customizados: ' + error.message, 'danger');
+            }
+        }
+        
+        // Função para renderizar conteúdos customizados
+        function renderCustomContent(customContents) {
+            const container = document.getElementById('customContentContainer');
+            container.innerHTML = '';
+            
+            customContents.forEach(content => {
+                const contentCard = `
+                    <div class="col-md-6 col-lg-4 mb-4 custom-content-item" data-title="${content.title}">
+                        <div class="card custom-content-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">${content.title}</h5>
+                                <p class="card-text text-muted small">
+                                    <i class="bi bi-calendar"></i> Criado em ${formatDate(content.createdAt)}
+                                    <br>
+                                    <i class="bi bi-pencil"></i> Atualizado em ${formatDate(content.updatedAt)}
+                                </p>
+                                <div class="content-preview bg-light p-2 rounded" style="max-height: 100px; overflow: hidden;">
+                                    <small class="text-muted">${content.content.substring(0, 100)}...</small>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <div class="btn-group w-100" role="group">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="editCustomContent(${content.id})">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="deleteCustomContent(${content.id})">
+                                        <i class="bi bi-trash"></i> Excluir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', contentCard);
+            });
+        }
+        
+        // Função para carregar painéis no select
+        async function carregarPaineis() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/paineis`, {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar painéis');
+                }
+                
+                const paineis = await response.json();
+                const select = document.getElementById('mediaPanel');
+                
+                // Limpar opções existentes (exceto a primeira)
+                select.innerHTML = '<option value="">Selecione um painel</option>';
+                
+                paineis.forEach(painel => {
+                    const option = document.createElement('option');
+                    option.value = painel.id;
+                    option.textContent = painel.name;
+                    select.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Erro ao carregar painéis:', error);
+                showAlert('Erro ao carregar painéis: ' + error.message, 'warning');
+            }
+        }
+        
+        // Função para upload de mídia
+        async function uploadMedia() {
+            const form = document.getElementById('uploadMediaForm');
+            const fileInput = document.getElementById('mediaFile');
+            const titleInput = document.getElementById('mediaTitle');
+            const durationInput = document.getElementById('mediaDuration');
+            const panelInput = document.getElementById('mediaPanel');
+            
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            try {
+                // Primeiro, fazer upload do arquivo
+                const uploadResponse = await fetch(`${API_BASE_URL}/uploadmidia`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!uploadResponse.ok) {
+                    throw new Error('Erro no upload do arquivo');
+                }
+                
+                const uploadResult = await uploadResponse.json();
+                
+                // Depois, adicionar a mídia ao banco
+                const mediaData = {
+                    title: titleInput.value || null,
+                    url: uploadResult.url,
+                    type: getMediaTypeFromFile(fileInput.files[0]),
+                    duration: durationInput.value ? parseInt(durationInput.value) : null,
+                    panelId: parseInt(panelInput.value)
+                };
+                
+                const addResponse = await fetch(`${API_BASE_URL}/addmidia`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: JSON.stringify(mediaData)
+                });
+                
+                if (!addResponse.ok) {
+                    throw new Error('Erro ao adicionar mídia');
+                }
+                
+                showAlert('Mídia enviada com sucesso!', 'success');
+                
+                // Fechar modal e limpar formulário
+                const modal = bootstrap.Modal.getInstance(document.getElementById('uploadMediaModal'));
+                modal.hide();
+                form.reset();
+                
+                // Recarregar mídias
+                carregarMedias();
+                
+            } catch (error) {
+                console.error('Erro no upload:', error);
+                showAlert('Erro no upload: ' + error.message, 'danger');
+            }
+        }
+        
+        // Função para determinar tipo de mídia pelo arquivo
+        function getMediaTypeFromFile(file) {
+            if (file.type.startsWith('image/')) {
+                return 'PHOTO';
+            } else if (file.type.startsWith('video/')) {
+                return 'VIDEO';
+            }
+            return 'PHOTO'; // Default
+        }
+        
+        // Função para adicionar conteúdo customizado
+        async function addCustomContent() {
+            const form = document.getElementById('addCustomContentForm');
+            const titleInput = document.getElementById('customContentTitle');
+            const contentInput = document.getElementById('customContentContent');
+            
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const data = {
+                title: titleInput.value,
+                content: contentInput.value
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/custom-screens`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao criar conteúdo customizado');
+                }
+                
+                showAlert('Conteúdo customizado criado com sucesso!', 'success');
+                
+                // Fechar modal e limpar formulário
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addCustomContentModal'));
+                modal.hide();
+                form.reset();
+                
+                // Recarregar conteúdos
+                carregarCustomContent();
+                
+            } catch (error) {
+                console.error('Erro ao criar conteúdo:', error);
+                showAlert('Erro ao criar conteúdo: ' + error.message, 'danger');
+            }
+        }
+        
+        // Função para editar conteúdo customizado
+        async function editCustomContent(id) {
+            try {
+                // Buscar dados do conteúdo
+                const response = await fetch(`${API_BASE_URL}/custom-screens`, {
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao buscar conteúdo');
+                }
+                
+                const customContents = await response.json();
+                const content = customContents.find(c => c.id === id);
+                
+                if (!content) {
+                    throw new Error('Conteúdo não encontrado');
+                }
+                
+                // Preencher modal de edição
+                document.getElementById('editCustomContentId').value = content.id;
+                document.getElementById('editCustomContentTitle').value = content.title;
+                document.getElementById('editCustomContentContent').value = content.content;
+                
+                // Abrir modal
+                const modal = new bootstrap.Modal(document.getElementById('editCustomContentModal'));
+                modal.show();
+                
+            } catch (error) {
+                console.error('Erro ao buscar conteúdo:', error);
+                showAlert('Erro ao buscar conteúdo: ' + error.message, 'danger');
+            }
+        }
+        
+        // Função para atualizar conteúdo customizado
+        async function updateCustomContent() {
+            const form = document.getElementById('editCustomContentForm');
+            const idInput = document.getElementById('editCustomContentId');
+            const titleInput = document.getElementById('editCustomContentTitle');
+            const contentInput = document.getElementById('editCustomContentContent');
+            
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const data = {
+                title: titleInput.value,
+                content: contentInput.value
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/custom-screens/${idInput.value}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao atualizar conteúdo customizado');
+                }
+                
+                showAlert('Conteúdo customizado atualizado com sucesso!', 'success');
+                
+                // Fechar modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editCustomContentModal'));
+                modal.hide();
+                
+                // Recarregar conteúdos
+                carregarCustomContent();
+                
+            } catch (error) {
+                console.error('Erro ao atualizar conteúdo:', error);
+                showAlert('Erro ao atualizar conteúdo: ' + error.message, 'danger');
+            }
+        }
+        
+        // Função para excluir conteúdo customizado
+        async function deleteCustomContent(id) {
+            if (!confirm('Tem certeza que deseja excluir este conteúdo customizado?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/custom-screens/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao excluir conteúdo customizado');
+                }
+                
+                showAlert('Conteúdo customizado excluído com sucesso!', 'success');
+                carregarCustomContent();
+                
+            } catch (error) {
+                console.error('Erro ao excluir conteúdo:', error);
+                showAlert('Erro ao excluir conteúdo: ' + error.message, 'danger');
+            }
+        }
+        
+        // Função para visualizar mídia
+        function viewMedia(id) {
+            // Implementar visualização da mídia
+            showAlert('Funcionalidade de visualização em desenvolvimento', 'info');
+        }
+        
+        // Função para excluir mídia
+        async function deleteMedia(id) {
+            if (!confirm('Tem certeza que deseja excluir esta mídia?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/midia/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao excluir mídia');
+                }
+                
+                showAlert('Mídia excluída com sucesso!', 'success');
+                carregarMedias();
+                
+            } catch (error) {
+                console.error('Erro ao excluir mídia:', error);
+                showAlert('Erro ao excluir mídia: ' + error.message, 'danger');
+            }
+        }
+        
+        // Função para formatar data
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
+        }
+        
+        // Função de busca para mídias
+        function setupMediaSearch() {
+            const searchInput = document.getElementById('searchMedias');
+            const filterSelect = document.getElementById('filterMediaType');
+            
+            function filterMedias() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const filterType = filterSelect.value;
+                const mediaItems = document.querySelectorAll('.media-item');
+                let visibleCount = 0;
+                
+                mediaItems.forEach(item => {
+                    const title = item.dataset.title.toLowerCase();
+                    const type = item.dataset.type;
+                    
+                    const matchesSearch = title.includes(searchTerm);
+                    const matchesFilter = !filterType || type === filterType;
+                    
+                    if (matchesSearch && matchesFilter) {
+                        item.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // Atualizar contador
+                const totalMedias = document.getElementById('totalMedias');
+                if (searchTerm || filterType) {
+                    totalMedias.textContent = visibleCount;
+                } else {
+                    totalMedias.textContent = mediaItems.length;
+                }
+            }
+            
+            searchInput.addEventListener('input', filterMedias);
+            filterSelect.addEventListener('change', filterMedias);
+        }
+        
+        // Função de busca para conteúdos customizados
+        function setupCustomContentSearch() {
+            const searchInput = document.getElementById('searchCustomContent');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const contentItems = document.querySelectorAll('.custom-content-item');
+                let visibleCount = 0;
+                
+                contentItems.forEach(item => {
+                    const title = item.dataset.title.toLowerCase();
+                    
+                    if (title.includes(searchTerm)) {
+                        item.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // Atualizar contador
+                const totalCustomContent = document.getElementById('totalCustomContent');
+                if (searchTerm) {
+                    totalCustomContent.textContent = visibleCount;
+                } else {
+                    totalCustomContent.textContent = contentItems.length;
+                }
+            });
+        }
+        
+        // Função para definir link ativo na sidebar
+        function setActiveLink() {
+            const currentPage = window.location.pathname.split('/').pop();
+            const links = document.querySelectorAll('.sidebar-nav a');
+            
+            links.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === currentPage) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        
+        // Função de logout
+        function handleLogout() {
+            if (confirm('Tem certeza que deseja sair?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('userName');
+                window.location.href = '../login.html';
+            }
+        }
+        
+        // Função para preencher nome do usuário
+        function fillUserName() {
+            const userName = localStorage.getItem('userName');
+            if (userName) {
+                document.getElementById('userName').textContent = userName;
+            }
+        }
+        
+        // Toggle do tema
+         function initThemeToggle() {
+             const themeSwitch = document.getElementById('themeSwitch');
+             const currentTheme = localStorage.getItem('theme') || 'light';
+             
+             if (currentTheme === 'dark') {
+                 document.body.classList.add('dark-theme');
+                 themeSwitch.checked = true;
+             }
+             
+             themeSwitch.addEventListener('change', function() {
+                 if (this.checked) {
+                     document.body.classList.add('dark-theme');
+                     localStorage.setItem('theme', 'dark');
+                 } else {
+                     document.body.classList.remove('dark-theme');
+                     localStorage.setItem('theme', 'light');
+                 }
+             });
+         }
+
+        // Configurar sidebar
+        function initSidebar() {
+            // Logout da sidebar
+            document.getElementById('logoutBtnSidebar').addEventListener('click', function(e) {
+                e.preventDefault();
+                handleLogout();
+            });
+        }
+
+        // Event listeners para tabs
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar autenticação
+            if (!checkAuth()) return;
+            
+            // Inicializar tema e sidebar
+            initThemeToggle();
+            initSidebar();
+            
+            // Preencher nome do usuário
+            fillUserName();
+            
+            // Definir link ativo
+            setActiveLink();
+            
+            // Carregar dados iniciais
+            carregarMedias();
+            carregarPaineis();
+            
+            // Configurar buscas
+            setupMediaSearch();
+            setupCustomContentSearch();
+            
+            // Event listener para mudança de aba
+            const tabButtons = document.querySelectorAll('#mediaTabs button[data-bs-toggle="tab"]');
+            tabButtons.forEach(button => {
+                button.addEventListener('shown.bs.tab', function(event) {
+                    const targetTab = event.target.getAttribute('data-bs-target');
+                    
+                    if (targetTab === '#custom-content') {
+                        carregarCustomContent();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

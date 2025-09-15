@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vix Mídia - Clientes</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="modern-dashboard.css">
+  <!-- Configuração da API -->
+  <script src="../js/config.js"></script>
+</head>
+
+<body>
+  <!-- Overlay para sidebar em dispositivos móveis -->
+  <div class="sidebar-overlay"></div>
+
+  <div class="wrapper">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <img src="../img/vixmidia_dark.png" alt="Logo VixMídia" class="img-fluid">
+        <button class="sidebar-toggle">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+      </div>
+
+      <ul class="list-unstyled">
+        <li>
+          <a class="sidebar-link" href="index.html">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="dispositivos.html">
+            <i class="bi bi-tv"></i>
+            <span>Dispositivos</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="paineis.html">
+            <i class="bi bi-pip-fill"></i>
+            <span>Painéis</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="midias.html">
+            <i class="bi bi-collection-play"></i>
+            <span>Mídias</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link active" href="clients.html">
+            <i class="bi bi-person-video2"></i>
+            <span>Clientes</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="campaigns.html">
+            <i class="bi bi-megaphone"></i>
+            <span>Campanhas</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="relatorios.html">
+            <i class="bi bi-clipboard2-pulse"></i>
+            <span>Relatórios</span>
+          </a>
+        </li>
+        <li id="adminMenuItem" style="display: none;">
+          <a class="sidebar-link" href="admin.html">
+            <i class="bi bi-shield-check"></i>
+            <span>Administração</span>
+          </a>
+        </li>
+      </ul>
+
+      <hr>
+
+      <ul class="list-unstyled">
+        <li>
+          <a class="sidebar-link" href="configuracoes.html">
+            <i class="bi bi-gear"></i>
+            <span>Configurações</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="#" id="logoutBtnSidebar">
+            <i class="bi bi-box-arrow-left"></i>
+            <span>Sair</span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Informações do usuário -->
+      <div class="sidebar-footer mt-auto">
+        <div class="d-flex align-items-center mb-3">
+          <div class="sidebar-user-icon me-2">
+            <i class="bi bi-person-circle text-white" style="font-size: 1.5rem;"></i>
+          </div>
+          <div class="sidebar-user-info">
+            <span id="userName" class="text-white">Usuário</span>
+          </div>
+        </div>
+        <!-- Toggle de tema claro/escuro -->
+        <div class="px-0 py-2">
+          <div class="form-check form-switch d-flex align-items-center">
+            <input class="form-check-input me-2" type="checkbox" id="themeToggle">
+            <label class="form-check-label text-white" for="themeToggle">
+              <i class="bi bi-moon"></i>
+              <span class="ms-2">Modo Escuro</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <main class="content">
+      <!-- Cabeçalho da Página -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Clientes</h1>
+          <p class="page-subtitle">Gerencie seus clientes</p>
+        </div>
+        <div class="d-flex align-items-center">
+          <!-- Barra de pesquisa -->
+          <div class="search-container me-3 position-relative">
+            <input type="text" class="form-control search-input" placeholder="Buscar clientes...">
+            <i class="bi bi-search search-icon"></i>
+            <div class="search-results shadow-sm"></div>
+          </div>
+          <!-- Botão de adicionar cliente -->
+          <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addClientModal">
+            <i class="bi bi-plus-circle me-2"></i> Adicionar Cliente
+          </button>
+          <!-- Ícone de configuração -->
+          <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#configModal" title="Configurações">
+            <i class="bi bi-gear"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Alertas -->
+      <div class="alert-container" id="alertContainer"></div>
+
+      <!-- Cards de Estatísticas -->
+      <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+        <!-- Card de Total de Clientes -->
+        <div class="col animate-entry">
+          <div class="card stats-card">
+            <div class="card-body">
+              <div class="stats-icon" style="background-color: rgba(67, 97, 238, 0.1); color: var(--primary-color);">
+                <i class="bi bi-people"></i>
+              </div>
+              <h5 class="stats-label">Total de Clientes</h5>
+              <div class="stats-value" id="totalClientes">0</div>
+              <div class="stats-trend up">
+                <i class="bi bi-arrow-up me-1"></i>
+                <span>12% desde o último mês</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Card de Clientes Ativos -->
+        <div class="col animate-entry">
+          <div class="card stats-card">
+            <div class="card-body">
+              <div class="stats-icon" style="background-color: rgba(76, 175, 80, 0.1); color: var(--success-color);">
+                <i class="bi bi-person-check"></i>
+              </div>
+              <h5 class="stats-label">Clientes Ativos</h5>
+              <div class="stats-value" id="clientesAtivos">0</div>
+              <div class="stats-trend up">
+                <i class="bi bi-arrow-up me-1"></i>
+                <span>5% desde o último mês</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Card de Novos Clientes -->
+        <div class="col animate-entry">
+          <div class="card stats-card">
+            <div class="card-body">
+              <div class="stats-icon" style="background-color: rgba(76, 201, 240, 0.1); color: var(--accent-color);">
+                <i class="bi bi-person-plus"></i>
+              </div>
+              <h5 class="stats-label">Novos Clientes</h5>
+              <div class="stats-value" id="novosClientes">0</div>
+              <div class="stats-trend up">
+                <i class="bi bi-arrow-up me-1"></i>
+                <span>18% desde o último mês</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de Clientes -->
+      <div class="card mb-4 animate-entry">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0">Lista de Clientes</h5>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="clientFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              Filtrar
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="clientFilterDropdown">
+              <li><a class="dropdown-item active" href="#">Todos</a></li>
+              <li><a class="dropdown-item" href="#">Ativos</a></li>
+              <li><a class="dropdown-item" href="#">Inativos</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>CPF/CNPJ</th>
+                  <th>Email</th>
+                  <th>Endereço</th>
+                  <th>Telefone</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="clientesContainer">
+                <tr>
+                  <td colspan="6" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Carregando clientes...</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botão flutuante para dispositivos móveis -->
+      <button class="mobile-toggle d-lg-none">
+        <i class="bi bi-list"></i>
+      </button>
+    </main>
+  </div>
+
+  <!-- Modal para Adicionar Cliente -->
+  <div class="modal fade" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addClientModalLabel">
+            <i class="bi bi-plus-circle me-2"></i>Adicionar Cliente
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addClientForm">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="clientName" class="form-label">Nome <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="clientName" required placeholder="Digite o nome do cliente" />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="clientCpfCnpj" class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="clientCpfCnpj" required placeholder="Digite o CPF ou CNPJ" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="clientEmail" class="form-label">Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" id="clientEmail" required placeholder="Digite o email" />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="clientPhone" class="form-label">Telefone <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="clientPhone" required placeholder="Digite o telefone" />
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="clientAddress" class="form-label">Endereço <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="clientAddress" required placeholder="Digite o endereço completo" />
+            </div>
+            <div class="mb-3">
+              <label for="clientPassword" class="form-label">Senha <span class="text-danger">*</span></label>
+              <input type="password" class="form-control" id="clientPassword" required placeholder="Digite a senha" />
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="saveClientBtn">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Editar Cliente -->
+  <div class="modal fade" id="editClientModal" tabindex="-1" aria-labelledby="editClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editClientModalLabel">
+            <i class="bi bi-pencil-square me-2"></i>Editar Cliente
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Navegação das Abas -->
+          <ul class="nav nav-tabs" id="clientEditTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="client-data-tab" data-bs-toggle="tab" data-bs-target="#client-data" type="button" role="tab" aria-controls="client-data" aria-selected="true">
+                <i class="bi bi-person me-2"></i>Dados do Cliente
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="campaigns-tab" data-bs-toggle="tab" data-bs-target="#campaigns" type="button" role="tab" aria-controls="campaigns" aria-selected="false">
+                <i class="bi bi-megaphone me-2"></i>Campanhas
+              </button>
+            </li>
+          </ul>
+
+          <!-- Conteúdo das Abas -->
+          <div class="tab-content" id="clientEditTabsContent">
+            <!-- Aba 1: Dados do Cliente -->
+            <div class="tab-pane fade show active" id="client-data" role="tabpanel" aria-labelledby="client-data-tab">
+              <div class="mt-3">
+                <form id="editClientForm">
+                  <input type="hidden" id="editClientId">
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label for="editClientName" class="form-label">Nome <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="editClientName" required placeholder="Digite o nome do cliente" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label for="editClientCpfCnpj" class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="editClientCpfCnpj" required placeholder="Digite o CPF ou CNPJ" />
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label for="editClientEmail" class="form-label">Email <span class="text-danger">*</span></label>
+                      <input type="email" class="form-control" id="editClientEmail" required placeholder="Digite o email" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label for="editClientPhone" class="form-label">Telefone <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" id="editClientPhone" required placeholder="Digite o telefone" />
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label for="editClientAddress" class="form-label">Endereço <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="editClientAddress" required placeholder="Digite o endereço completo" />
+                  </div>
+                  <div class="mb-3">
+                    <label for="editClientPassword" class="form-label">Nova Senha (deixe em branco para manter a atual)</label>
+                    <input type="password" class="form-control" id="editClientPassword" placeholder="Digite a nova senha" />
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- Aba 2: Campanhas -->
+            <div class="tab-pane fade" id="campaigns" role="tabpanel" aria-labelledby="campaigns-tab">
+              <div class="mt-3">
+                <!-- Cabeçalho da seção de campanhas -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="mb-0">Campanhas do Cliente</h6>
+                  <button type="button" class="btn btn-primary btn-sm" onclick="abrirModalNovaCampanha()">
+                    <i class="bi bi-plus-circle me-1"></i>Nova Campanha
+                  </button>
+                </div>
+
+                <!-- Lista de campanhas -->
+                <div id="campaignsList">
+                  <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Carregando campanhas...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="updateClientBtn">Atualizar Cliente</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Nova Campanha -->
+  <div class="modal fade" id="newCampaignModal" tabindex="-1" aria-labelledby="newCampaignModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newCampaignModalLabel">
+            <i class="bi bi-plus-circle me-2"></i>Nova Campanha
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="newCampaignForm">
+            <input type="hidden" id="newCampaignClientId">
+            <div class="mb-3">
+              <label for="newCampaignName" class="form-label">Nome da Campanha <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="newCampaignName" required placeholder="Digite o nome da campanha" />
+            </div>
+            <div class="mb-3">
+              <label for="newCampaignDescription" class="form-label">Descrição</label>
+              <textarea class="form-control" id="newCampaignDescription" rows="3" placeholder="Digite a descrição da campanha"></textarea>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="newCampaignStartDate" class="form-label">Data de Início <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="newCampaignStartDate" required />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="newCampaignEndDate" class="form-label">Data de Fim <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="newCampaignEndDate" required />
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="newCampaignActive" checked>
+                <label class="form-check-label" for="newCampaignActive">
+                  Campanha Ativa
+                </label>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="createCampaignBtn">Criar Campanha</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Editar Campanha -->
+  <div class="modal fade" id="editCampaignClientModal" tabindex="-1" aria-labelledby="editCampaignClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editCampaignClientModalLabel">
+            <i class="bi bi-pencil-square me-2"></i>Editar Campanha
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editCampaignClientForm">
+            <input type="hidden" id="editCampaignClientId">
+            <div class="mb-3">
+              <label for="editCampaignClientName" class="form-label">Nome da Campanha <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="editCampaignClientName" required placeholder="Digite o nome da campanha" />
+            </div>
+            <div class="mb-3">
+              <label for="editCampaignClientDescription" class="form-label">Descrição</label>
+              <textarea class="form-control" id="editCampaignClientDescription" rows="3" placeholder="Digite a descrição da campanha"></textarea>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="editCampaignClientStartDate" class="form-label">Data de Início <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="editCampaignClientStartDate" required />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="editCampaignClientEndDate" class="form-label">Data de Fim <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="editCampaignClientEndDate" required />
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="editCampaignClientActive">
+                <label class="form-check-label" for="editCampaignClientActive">
+                  Campanha Ativa
+                </label>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="updateCampaignClientBtn">Atualizar Campanha</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Excluir Cliente -->
+  <div class="modal fade" id="deleteClientModal" tabindex="-1" aria-labelledby="deleteClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteClientModalLabel">
+            <i class="bi bi-trash me-2"></i>Excluir Cliente
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="deleteClientId">
+          <p>Tem certeza que deseja excluir o cliente <strong id="deleteClientName"></strong>?</p>
+          <p class="text-danger">Esta ação não pode ser desfeita.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Excluir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script do Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Script do Dashboard -->
+  <script src="modern-dashboard.js"></script>
+  <!-- Script personalizado -->
+  <script src="clients.js?v=7.0"></script>
+  
+  <script>
+    // ===== MODAL DE CONFIGURAÇÃO =====
+    document.addEventListener('DOMContentLoaded', function() {
+      // Toggle de tema
+      const themeToggle = document.getElementById('themeToggle');
+      const themeToggleModal = document.getElementById('themeToggleModal');
+      const body = document.body;
+      
+      // Verificar tema salvo
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        body.classList.add('dark-theme');
+        if (themeToggle) themeToggle.checked = true;
+        if (themeToggleModal) themeToggleModal.checked = true;
+      }
+      
+      // Função para alternar tema
+      function toggleTheme(isDark) {
+        if (isDark) {
+          body.classList.add('dark-theme');
+          localStorage.setItem('theme', 'dark');
+        } else {
+          body.classList.remove('dark-theme');
+          localStorage.setItem('theme', 'light');
+        }
+        // Sincronizar ambos os toggles
+        if (themeToggle) themeToggle.checked = isDark;
+        if (themeToggleModal) themeToggleModal.checked = isDark;
+      }
+      
+      if (themeToggle) {
+        themeToggle.addEventListener('change', function() {
+          toggleTheme(this.checked);
+        });
+      }
+      
+      if (themeToggleModal) {
+        themeToggleModal.addEventListener('change', function() {
+          toggleTheme(this.checked);
+        });
+      }
+      
+      // Carregar informações do usuário no modal
+      const userName = localStorage.getItem('usuarioName');
+      const userEmail = localStorage.getItem('usuarioEmail');
+      const userNameModal = document.getElementById('userNameModal');
+      const userEmailModal = document.getElementById('userEmailModal');
+      if (userNameModal) userNameModal.textContent = userName || 'Usuário';
+      if (userEmailModal) userEmailModal.textContent = userEmail || 'usuario@email.com';
+      
+      // Logout do modal
+      const logoutBtnModal = document.getElementById('logoutBtnModal');
+      if (logoutBtnModal) {
+        logoutBtnModal.addEventListener('click', function() {
+          if (confirm('Tem certeza que deseja sair?')) {
+            localStorage.removeItem('usuarioEmail');
+            localStorage.removeItem('usuarioName');
+            localStorage.removeItem('token');
+            window.location.href = '/';
+          }
+        });
+      }
+    });
+  </script>
+
+  <!-- Modal de Configuração -->
+  <div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="configModalLabel">
+            <i class="bi bi-gear me-2"></i>Configurações
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Informações do usuário -->
+          <div class="mb-4">
+            <h6 class="fw-bold mb-3">
+              <i class="bi bi-person-circle me-2"></i>Usuário Logado
+            </h6>
+            <div class="d-flex align-items-center p-3 bg-light rounded">
+              <div class="me-3 position-relative">
+                <img id="userAvatarModal" src="../img/logo.png" alt="Avatar" 
+                         class="rounded-circle" style="width: 60px; height: 60px; object-fit: cover;">
+                <button type="button" class="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle p-1" 
+                        style="width: 24px; height: 24px;" onclick="document.getElementById('avatarInput').click()">
+                  <i class="bi bi-camera" style="font-size: 10px;"></i>
+                </button>
+                <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="uploadAvatar(this)">
+              </div>
+              <div>
+                <div class="fw-semibold" id="userNameModal">Usuário</div>
+                <div class="text-muted small" id="userEmailModal">usuario@email.com</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Configurações de tema -->
+          <div class="mb-4">
+            <h6 class="fw-bold mb-3">
+              <i class="bi bi-palette me-2"></i>Aparência
+            </h6>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="themeToggleModal">
+              <label class="form-check-label" for="themeToggleModal">
+                <i class="bi bi-moon me-2"></i>Modo Escuro
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>Fechar
+          </button>
+          <button type="button" class="btn btn-danger" id="logoutBtnModal">
+            <i class="bi bi-box-arrow-right me-1"></i>Sair
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

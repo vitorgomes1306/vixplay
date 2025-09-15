@@ -1,31 +1,104 @@
-//
-// importações
-// 
-import express from 'express'; // Importa o Express para criar o servidor web
-import publicRoutes from './routes/public.js'; // Importa as rotas públicas
-import privateRoutes from './routes/private.js'; // Importa as rotas privadas
-import auth from './middlewares/auth.js'; // Importa o middleware de autenticação
-import { PrismaClient } from '@prisma/client'; // Importa o PrismaClient para interagir com o banco de dados
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { PrismaClient } from '@prisma/client';
+import cron from 'node-cron';
+import path from 'path'; // Adicionar esta importação
 
-const app = express(); // Cria uma instância do Express
+import publicRoutes from './routes/public.js';
+import privateRoutes from './routes/private.js';
+import auth from './middlewares/auth.js';
 
-app.use(express.json()); // Middleware para analisar o corpo das requisições como JSON
-app.use('/', publicRoutes); // Usa as rotas públicas definidas em public.js
-app.use('/', auth, privateRoutes); // Usa as rotas privadas definidas em private.js E passa pelo auth antes
+dotenv.config();
 
-app.get('/usuarios', async (req, res) => { // Rota para listar usuários
-    try {
-        const usuarios = await prisma.user.findMany(); // Busca todos os usuários no banco de dados
-        res.status(200).json(usuarios); // Retorna o array de usuários como JSON
-    } catch (err) {
-        console.error('Erro ao buscar usuários:', err);
-        res.status(500).json({ error: 'Erro ao buscar usuários' });
+const app = express();
+const prisma = new PrismaClient();
+
+app.use(cors());
+app.use(express.json());
+
+// Servir arquivos estáticos da pasta vix-midia
+app.use('/vix-midia', express.static(path.join(process.cwd(), 'vix-midia')));
+
+// Adicionar esta linha para servir arquivos estáticos
+app.use('/public', express.static('public'));
+
+// Montar rotas públicas (Não requerem autenticação)
+app.use('/public', publicRoutes);          // Rotas públicas principais
+
+// Montar rotas privadas (requere autenticação, protegido pelo middleware `auth`)
+app.use('/private', auth, privateRoutes);     // Rotas privadas (protegidas)
+
+// Middleware 404 deve vir DEPOIS de todas as rotas
+// app.use((req, res) => {
+//   console.log(`❌ 404 - Rota não encontrada: ${req.method} ${req.path}`);
+//   res.status(404).json({ error: 'Rota não encontrada' });
+// });
+
+// Função para verificar títulos vencidos há mais de 3 dias e bloquear usuários
+async function checkOverdueUsersAndBlock() {
+  try {
+    console.log('🔍 Iniciando verificação de usuários com títulos vencidos há mais de 3 dias...');
+    
+    // Data atual menos 3 dias
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+    
+    // Buscar títulos vencidos há mais de 3 dias que ainda não foram pagos
+    const overdueFinancialTitles = await prisma.financialTitle.findMany({
+      where: {
+        dueDate: {
+          lt: threeDaysAgo
+        },
+        status: {
+          in: ['PENDING', 'OVERDUE']
+        }
+      },
+      include: {
+        user: true
+      }
+    });
+    
+    if (overdueFinancialTitles.length === 0) {
+      console.log('✅ Nenhum usuário encontrado com títulos vencidos há mais de 3 dias.');
+      return;
     }
+    
+    // Obter IDs únicos dos usuários com títulos vencidos
+    const userIdsToBlock = [...new Set(overdueFinancialTitles.map(title => title.userId))];
+    
+    // Bloquear usuários
+    const blockedUsers = await prisma.user.updateMany({
+      where: {
+        id: {
+          in: userIdsToBlock
+        },
+        bloqued: false // Só bloquear se ainda não estiver bloqueado
+      },
+      data: {
+        bloqued: true
+      }
+    });
+    
+    console.log(`🔒 ${blockedUsers.count} usuários foram bloqueados por títulos vencidos há mais de 3 dias.`);
+    console.log(`📊 Total de títulos vencidos encontrados: ${overdueFinancialTitles.length}`);
+    
+  } catch (error) {
+    console.error('❌ Erro ao verificar usuários com títulos vencidos:', error);
+  }
+}
+
+// Agendar verificação diária às 10:00
+cron.schedule('0 10 * * *', () => {
+  console.log('⏰ Executando verificação automática de títulos vencidos às 10:00...');
+  checkOverdueUsersAndBlock();
+}, {
+  timezone: 'America/Sao_Paulo'
 });
 
-app.use(express.static('public')); // pasta com arquivos "públicos"
+console.log('📅 Agendamento configurado: Verificação de títulos vencidos todos os dias às 10:00');
 
-app.listen(4000, () => { // Inicia o servidor na porta 4000
-    console.log('Server is running on http://localhost:4000');
-});
 
+// Inicia o servidor
+const PORT = process.env.PORT || 4000; // Porta no arquivo .env ou 4000 como padrão
+app.listen(PORT, () => console.log(`✅ Servidor VixMIDIA rodando na porta ${PORT}`));

@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  html, body {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .tela {
+    display: flex;
+    height: 100vh;
+  }
+  
+  /* LADO ESQUERDO */
+  .lado-esquerdo {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    background-color: #007cc2;
+    color: white;
+  }
+  
+  .topo-esquerdo {
+    flex: 0 0 15%;
+    background: #005fa3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .meio-esquerdo {
+    flex: 0 0 75%;
+    background: #007cc2;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .meio-esquerdo iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    z-index: 1;
+  }
+
+  .senha-chamada {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 100px;
+    font-weight: bold;
+    color: white;
+    z-index: 2;
+    display: none;
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  
+  .rodape-esquerdo {
+    flex: 0 0 10%;
+    background: #000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 40px;
+    color: white;
+    font-size: 28px;
+  }
+  
+  .rodape-esquerdo .info-data,
+  .rodape-esquerdo .info-hora {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .rodape-esquerdo i {
+    font-size: 30px;
+    color: #00d5ff;
+  }
+  
+  #data-hoje,
+  #relogio {
+    font-weight: bold;
+    font-size: 60px;
+    font-family: Arial, Helvetica, sans-serif
+  }
+
+  /* LADO DIREITO */
+  .lado-direito {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #eaeaea;
+    color: #222;
+  }
+  
+  /* TOPO DIREITO */
+  .topo-direito {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .senha-atual {
+    flex: 0 0 85%;
+    background: #ffffff;
+    font-size: 200px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .titulo-chamadas {
+    flex: 0 0 15%;
+    background: #111;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+  }
+  
+  
+  .ultimas-senhas {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .ultimas-senhas .senha {
+    flex: 1;
+    background: #e2e2e2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
+    border-bottom: 1px solid white;
+    font-weight: bold;
+  }
+  
+  .ultimas-senhas .senha:last-child {
+    border-bottom: none;
+    font-weight: bold;
+  }
+  
+
+.data-hoje {
+    color: #fff;
+  }
+  
+  .relogio {
+    color: #fff;
+    font-family: monospace;
+  }

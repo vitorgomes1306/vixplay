@@ -1,0 +1,86 @@
+/* General Layout */
+body {
+    
+    min-height: 100vh; /* Garante que o body ocupe toda a altura da viewport */
+    
+}
+
+/* Sidebar Styles */
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    padding-top: 58px; /* Espaço para a navbar superior no mobile */
+    width: 240px; /* Largura da sidebar no desktop */
+    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.05), 0 2px 10px 0 rgba(0, 0, 0, 0.05);
+    z-index: 600; /* Garante que fique acima de outros elementos, mas abaixo de modais */
+    transition: all 0.3s ease-in-out; /* Transição suave para abrir/fechar */
+    display: flex; /* Para flex-grow no conteúdo */
+    flex-direction: column; /* Organização vertical */
+}
+
+/* Ajustes para telas pequenas (mobile) */
+@media (max-width: 991.98px) { /* Bootstrap's 'lg' breakpoint */
+    .sidebar {
+        width: 100%; /* Largura total em mobile */
+        left: -100%; /* Esconde a sidebar fora da tela por padrão */
+        top: 58px; /* Altura da navbar superior */
+        padding-top: 20px; /* Ajuste de padding para mobile */
+        z-index: 1040; /* Acima da maioria dos elementos, mas abaixo de backdrops de modal */
+    }
+    .sidebar.collapse.show {
+        left: 0; /* Desliza a sidebar para a tela quando ativa */
+    }
+    .main-content-wrapper {
+        margin-left: 0 !important; /* Sem margem na esquerda no mobile */
+        padding-top: 58px; /* Espaço para a navbar superior fixa */
+    }
+    .navbar.fixed-top {
+        display: flex !important; /* Mostra a navbar superior no mobile */
+    }
+}
+
+/* Ajustes para telas grandes (desktop) */
+@media (min-width: 992px) { /* Bootstrap's 'lg' breakpoint */
+    .sidebar {
+        padding-top: 20px; /* Ajuste de padding para desktop */
+    }
+    .main-content-wrapper {
+        margin-left: 240px; /* Empurra o conteúdo principal para a direita da sidebar */
+        padding-top: 0; /* Não precisa de padding para navbar superior no desktop */
+    }
+    .navbar.fixed-top {
+        display: none !important; /* Esconde a navbar superior no desktop (usamos apenas a sidebar) */
+    }
+}
+
+/* Estilo dos itens de lista da sidebar (links de navegação) */
+.sidebar .list-group-item {
+    border-radius: 5px;
+    margin-bottom: 5px;
+    transition: background-color 0.2s ease-in-out; /* Transição de hover */
+}
+.sidebar .list-group-item:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important; /* Fundo mais claro no hover */
+}
+.sidebar .list-group-item.active {
+    background-color: rgba(255, 255, 255, 0.2) !important; /* Fundo mais claro para item ativo */
+    font-weight: bold; /* Negrito para item ativo */
+}
+
+/* Ajustes para o wrapper do conteúdo principal */
+.main-content-wrapper {
+    flex-grow: 1; /* Permite que o conteúdo principal ocupe o espaço restante */
+    background: #f5f5f5; /* Cor de fundo do corpo */
+    width: 100%; /* Ocupa a largura total disponível */
+}
+
+/* Reseta margens de elementos do Bootstrap para se ajustarem à nova estrutura */
+.container-fluid.mt-4 {
+    margin-top: 0 !important;
+}
+
+main {
+    padding: 1.5rem; /* Padding geral para o conteúdo dentro do main */
+}

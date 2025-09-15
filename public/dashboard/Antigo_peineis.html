@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VixMidia</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-secondary">
+      <div class="container">
+        <a class="navbar-brand" href="#">
+          <img src="/img/vixmidia_dark.png" alt="" width="100" />
+        </a>
+        <div class="navbar-nav ms-auto">
+          <span class="navbar-text me-3">
+            Olá, <span id="userName"></span>!
+          </span>
+          <button
+            class="btn btn-outline-light btn-sm"
+            onclick="irParaDispositivos()"
+          >
+            <i class="bi bi-device-hdd me-1"></i>Dispositivos
+          </button>
+          <button class="btn btn-outline-light btn-sm ms-2" id="logoutBtn">
+            <i class="bi bi-box-arrow-right me-1"></i>Sair
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Container Principal -->
+    <div class="container mt-4">
+      <!-- Header -->
+      <div class="row mb-4">
+        <div class="col">
+          <h2 class="mb-3">
+            <i class="bi bi-grid-3x3-gap me-2"></i>Meus Painéis
+          </h2>
+          <button
+            class="btn btn-success"
+            data-bs-toggle="modal"
+            data-bs-target="#addPanelModal"
+          >
+            <i class="bi bi-plus-circle me-2"></i>Novo Painel
+          </button>
+        </div>
+      </div>
+
+      <!-- Alertas -->
+      <div id="alertContainer"></div>
+
+      <!-- Loading -->
+      <div id="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="mt-2 text-muted">Carregando painéis...</p>
+      </div>
+
+      <!-- Lista de Painéis -->
+      <div id="painelContainer" class="row g-4" style="display: none">
+        <!-- Painéis serão carregados aqui -->
+      </div>
+
+      <!-- Mensagem quando não há painéis -->
+      <div id="noPanels" class="text-center py-5" style="display: none">
+        <i class="bi bi-grid-3x3-gap display-1 text-muted"></i>
+        <h4 class="mt-3 text-muted">Nenhum painel encontrado</h4>
+        <p class="text-muted">Crie seu primeiro painel para começar!</p>
+        <button
+          class="btn btn-primary"
+          data-bs-toggle="modal"
+          data-bs-target="#addPanelModal"
+        >
+          <i class="bi bi-plus-circle me-2"></i>Criar Primeiro Painel
+        </button>
+      </div>
+    </div>
+    <!-- Modal Adicionar Painel -->
+    <div class="modal fade" id="addPanelModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="bi bi-plus-circle me-2"></i>Novo Painel
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="addPanelForm">
+              <div class="mb-3">
+                <label for="panelName" class="form-label"
+                  >Nome do Painel *</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="panelName"
+                  required
+                  placeholder="Ex: Painel Principal"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="panelDescription" class="form-label"
+                  >Descrição</label
+                >
+                <textarea
+                  class="form-control"
+                  id="panelDescription"
+                  rows="3"
+                  placeholder="Descrição opcional do painel"
+                ></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-success"
+              onclick="salvarPainel()"
+            >
+              <i class="bi bi-check-circle me-1"></i>Criar Painel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Editar Painel -->
+    <div class="modal fade" id="editPanelModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="bi bi-pencil-square me-2"></i>Editar Painel
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="editPanelForm">
+              <input type="hidden" id="editPanelId" />
+              <div class="mb-3">
+                <label for="editPanelName" class="form-label"
+                  >Nome do Painel *</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editPanelName"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="editPanelDescription" class="form-label"
+                  >Descrição</label
+                >
+                <textarea
+                  class="form-control"
+                  id="editPanelDescription"
+                  rows="3"
+                ></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="salvarEdicaoPainel()"
+            >
+              <i class="bi bi-check-circle me-1"></i>Salvar Alterações
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Confirmar Exclusão -->
+    <div class="modal fade" id="deletePanelModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">
+              <i class="bi bi-exclamation-triangle me-2"></i>Confirmar Exclusão
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="text-center">
+              <i
+                class="bi bi-exclamation-triangle-fill text-danger"
+                style="font-size: 3rem"
+              ></i>
+              <h4 class="mt-3">Tem certeza?</h4>
+              <p class="text-muted">
+                Você está prestes a excluir o painel "<strong
+                  id="deletePanelName"
+                ></strong
+                >".
+              </p>
+              <div class="alert alert-warning">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Atenção:</strong> Todos os dispositivos associados a
+                este painel também serão excluídos. Esta ação não pode ser
+                desfeita.
+              </div>
+            </div>
+            <input type="hidden" id="deletePanelId" />
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              onclick="confirmarExclusaoPainel()"
+            >
+              <i class="bi bi-trash me-1"></i>Sim, Excluir
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // ===== VARIÁVEIS GLOBAIS =====
+      const token = localStorage.getItem("token");
+      const userName = localStorage.getItem("usuarioName");
+      const painelContainer = document.getElementById("painelContainer");
+      const loading = document.getElementById("loading");
+      const noPanels = document.getElementById("noPanels");
+      const alertContainer = document.getElementById("alertContainer");
+
+      // ===== VERIFICAÇÃO DE AUTENTICAÇÃO =====
+      if (!token) {
+        window.location.href = "/";
+      }
+
+      // ===== INICIALIZAÇÃO =====
+      document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("userName").textContent = userName || "Usuário";
+        carregarPaineis();
+      });
+
+      // ===== FUNÇÃO PARA MOSTRAR ALERTAS =====
+      function mostrarAlerta(tipo, mensagem) {
+        const alertClass =
+          tipo === "sucesso" ? "alert-success" : "alert-danger";
+        const icon =
+          tipo === "sucesso" ? "bi-check-circle" : "bi-exclamation-triangle";
+
+        const alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="bi ${icon} me-2"></i>
+                    ${mensagem}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+        alertContainer.innerHTML = alertHtml;
+
+        // Auto-remover após 5 segundos
+        setTimeout(() => {
+          const alert = alertContainer.querySelector(".alert");
+          if (alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+          }
+        }, 5000);
+      }
+
+      // ===== NAVEGAÇÃO =====
+      function irParaDispositivos() {
+        window.location.href = "dispositivos.html";
+      }
+
+      // ===== LOGOUT =====
+      document.getElementById("logoutBtn").onclick = function () {
+        if (confirm("Tem certeza que deseja sair?")) {
+          localStorage.removeItem("usuarioEmail");
+          localStorage.removeItem("usuarioName");
+          localStorage.removeItem("token");
+          window.location.href = "/";
+        }
+      };
+      // ===== CARREGAR PAINÉIS =====
+      async function carregarPaineis() {
+        try {
+          loading.style.display = "block";
+          painelContainer.style.display = "none";
+          noPanels.style.display = "none";
+
+          const resposta = await fetch(
+            "http://45.172.160.51:4000/public/paineis",
+            {
+              headers: {
+                Authorization: "Bearer " + token,
+              },
+            }
+          );
+
+          if (!resposta.ok) {
+            throw new Error("Erro ao carregar painéis");
+          }
+
+          const paineis = await resposta.json();
+          loading.style.display = "none";
+
+          if (!Array.isArray(paineis) || paineis.length === 0) {
+            noPanels.style.display = "block";
+            return;
+          }
+
+          renderizarPaineis(paineis);
+          painelContainer.style.display = "flex";
+        } catch (error) {
+          console.error("Erro ao carregar painéis:", error);
+          loading.style.display = "none";
+          mostrarAlerta("erro", "Erro ao carregar painéis. Tente novamente.");
+        }
+      }
+
+      // ===== RENDERIZAR PAINÉIS =====
+      function renderizarPaineis(paineis) {
+        painelContainer.innerHTML = paineis
+          .map(
+            (painel) => `
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-grid-3x3-gap me-2 text-primary"></i>
+                            ${painel.name || "Sem Título"}
+                        </h5>
+                        <span class="badge bg-primary">#${painel.id}</span>
+                    </div>
+                    
+                    <p class="card-text text-muted flex-grow-1">
+                        ${painel.description || "Sem descrição"}
+                    </p>
+                    
+                    <div class="mt-auto">
+                        <small class="text-muted d-block mb-3">
+                            <i class="bi bi-calendar me-1"></i>
+                            Criado em: ${new Date(
+                              painel.createdAt
+                            ).toLocaleDateString("pt-BR")}
+                        </small>
+                        
+                        <!-- Botão principal para abrir o painel -->
+                        <div class="d-grid gap-2 mb-2">
+                            <button class="btn btn-primary" onclick="abrirPainel(${
+                              painel.id
+                            })">
+                                <i class="bi bi-play-circle me-2"></i>Abrir Painel
+                            </button>
+                        </div>
+                        
+                        <!-- Botões de ação secundários -->
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-secondary btn-sm flex-fill" 
+                                    onclick="abrirModalEdicao(${painel.id}, '${(
+              painel.name || ""
+            ).replace(/'/g, "\\'")}', '${(painel.description || "").replace(
+              /'/g,
+              "\\'"
+            )}')">
+                                <i class="bi bi-pencil me-1"></i>Editar
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm flex-fill" 
+                                    onclick="abrirModalExclusao(${
+                                      painel.id
+                                    }, '${(painel.name || "").replace(
+              /'/g,
+              "\\'"
+            )}')">
+                                <i class="bi bi-trash me-1"></i>Excluir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `
+          )
+          .join("");
+      }
+      // ===== ABRIR PAINEL PARA GERENCIAR MÍDIAS =====
+      function abrirPainel(painelId) {
+        window.location.href = `painel.html?id=${painelId}`;
+      }
+
+      // ===== SALVAR NOVO PAINEL =====
+      async function salvarPainel() {
+        const name = document.getElementById("panelName").value.trim();
+        const description = document
+          .getElementById("panelDescription")
+          .value.trim();
+
+        if (!name) {
+          mostrarAlerta("erro", "Nome do painel é obrigatório");
+          return;
+        }
+
+        try {
+          const resposta = await fetch(
+            "http://45.172.160.51:4000/public/painel",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({ name, description }),
+            }
+          );
+
+          if (resposta.ok) {
+            const painel = await resposta.json();
+            mostrarAlerta(
+              "sucesso",
+              `Painel "${painel.name}" criado com sucesso!`
+            );
+
+            // Fechar modal e limpar formulário
+            const modal = bootstrap.Modal.getInstance(
+              document.getElementById("addPanelModal")
+            );
+            modal.hide();
+            document.getElementById("addPanelForm").reset();
+
+            // Recarregar painéis
+            carregarPaineis();
+          } else {
+            const erro = await resposta.json();
+            mostrarAlerta(
+              "erro",
+              "Erro ao criar painel: " + (erro.error || "Erro desconhecido")
+            );
+          }
+        } catch (error) {
+          console.error("Erro ao criar painel:", error);
+          mostrarAlerta("erro", "Erro de conexão ao criar painel");
+        }
+      }
+      // ===== ABRIR MODAL DE EDIÇÃO =====
+      function abrirModalEdicao(id, name, description) {
+        document.getElementById("editPanelId").value = id;
+        document.getElementById("editPanelName").value = name;
+        document.getElementById("editPanelDescription").value =
+          description || "";
+
+        const modal = new bootstrap.Modal(
+          document.getElementById("editPanelModal")
+        );
+        modal.show();
+      }
+
+      // ===== SALVAR EDIÇÃO DO PAINEL =====
+      async function salvarEdicaoPainel() {
+        const id = document.getElementById("editPanelId").value;
+        const name = document.getElementById("editPanelName").value.trim();
+        const description = document
+          .getElementById("editPanelDescription")
+          .value.trim();
+
+        if (!name) {
+          mostrarAlerta("erro", "Nome do painel é obrigatório");
+          return;
+        }
+
+        try {
+          const resposta = await fetch(
+            `http://45.172.160.51:4000/public/painel/${id}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + token,
+              },
+              body: JSON.stringify({ name, description }),
+            }
+          );
+
+          if (resposta.ok) {
+            const painel = await resposta.json();
+            mostrarAlerta(
+              "sucesso",
+              `Painel "${painel.name}" atualizado com sucesso!`
+            );
+
+            // Fechar modal
+            const modal = bootstrap.Modal.getInstance(
+              document.getElementById("editPanelModal")
+            );
+            modal.hide();
+
+            // Recarregar painéis
+            carregarPaineis();
+          } else {
+            const erro = await resposta.json();
+            mostrarAlerta(
+              "erro",
+              "Erro ao atualizar painel: " + (erro.error || "Erro desconhecido")
+            );
+          }
+        } catch (error) {
+          console.error("Erro ao atualizar painel:", error);
+          mostrarAlerta("erro", "Erro de conexão ao atualizar painel");
+        }
+      }
+
+      // ===== ABRIR MODAL DE EXCLUSÃO =====
+      function abrirModalExclusao(id, name) {
+        document.getElementById("deletePanelId").value = id;
+        document.getElementById("deletePanelName").textContent = name;
+
+        const modal = new bootstrap.Modal(
+          document.getElementById("deletePanelModal")
+        );
+        modal.show();
+      }
+
+      // ===== CONFIRMAR EXCLUSÃO DO PAINEL =====
+      async function confirmarExclusaoPainel() {
+        const id = document.getElementById("deletePanelId").value;
+        const name = document.getElementById("deletePanelName").textContent;
+
+        try {
+          const resposta = await fetch(
+            `http://45.172.160.51:4000/public/painel/${id}`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: "Bearer " + token,
+              },
+            }
+          );
+
+          if (resposta.ok) {
+            mostrarAlerta("sucesso", `Painel "${name}" excluído com sucesso!`);
+
+            // Fechar modal
+            const modal = bootstrap.Modal.getInstance(
+              document.getElementById("deletePanelModal")
+            );
+            modal.hide();
+
+            // Recarregar painéis
+            carregarPaineis();
+          } else {
+            let errorMsg = "Erro desconhecido";
+            try {
+              const contentType = resposta.headers.get("content-type");
+              if (
+                contentType &&
+                contentType.indexOf("application/json") !== -1
+              ) {
+                const erro = await resposta.json();
+                errorMsg = erro.error || erro.message || errorMsg;
+              } else {
+                // Se não for JSON, tenta buscar texto (HTML ou outra coisa)
+                errorMsg = await resposta.text();
+              }
+            } catch (e) {
+              // Caso dê erro ao ler a resposta
+              errorMsg = "Erro inesperado ao analisar a resposta do servidor";
+            }
+            mostrarAlerta("erro", "Erro ao excluir painel: " + errorMsg);
+          }
+        } catch (error) {
+          console.error("Erro ao excluir painel:", error);
+          mostrarAlerta("erro", "Erro de conexão ao excluir painel");
+        }
+      }
+    </script>
+  </body>
+</html>

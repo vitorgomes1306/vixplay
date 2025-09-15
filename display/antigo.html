@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vídeos com Tempo e Manchetes</title>
+
+    <!-- Font Awesome - Biblioteca de ícones -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: black;
+        }
+
+        video {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+        }
+
+        #infoContainer {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 10px;
+            font-family: Arial, sans-serif;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+            max-width: calc(100% - 40px);
+            height: calc(15% - 30px);
+        }
+
+        #tempo {
+            flex: 0 0 16.5%;
+            /* Aumentado em 10% */
+            text-align: left;
+            padding-right: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        #tempo i {
+            margin-right: 10px;
+            font-size: 1.5rem;
+            color: #62a8ef;
+        }
+
+        #tempo h2 {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        #tempo p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        #linha {
+            height: 70%;
+            width: 2px;
+            background: gray;
+            margin: 0 10px;
+            display: block;
+        }
+
+        #manchete {
+            flex: 0 0 80%;
+            text-align: left;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        #manchete img {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            border-radius: 50%;
+            object-fit: contain;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        #manchete a {
+            color: #62a8ef;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        #manchete a:hover {
+            text-decoration: underline;
+        }
+
+        #manchete-category {
+            display: block;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <video id="player" autoplay muted playsinline></video>
+
+    <div id="infoContainer">
+        <!-- Previsão do tempo e cotações -->
+        <div id="tempo">
+            <i id="tempoIcon" class="fas fa-cloud-sun"></i>
+            <div>
+                <h2>Carregando...</h2>
+                <p></p>
+            </div>
+        </div>
+
+        <!-- Linha divisória -->
+        <div id="linha"></div>
+
+        <!-- Manchetes -->
+        <div id="manchete">
+            <img id="mancheteLogo" src="" alt="Logo">
+            <div>
+                <span id="manchete-content">Carregando manchetes...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const videos = [
+                "http://45.172.160.51/vix-midia/videos/8.mp4", // Cardápio Variado
+                "http://45.172.160.51/vix-midia/videos/7.mp4", // Saraiva Society
+                "http://45.172.160.51/vix-midia/videos/1.mp4", // Thay papel
+                "http://45.172.160.51/vix-midia/videos/2.mp4", // Vlink
+                "http://45.172.160.51/vix-midia/videos/3.mp4", // Tapioca
+                "http://45.172.160.51/vix-midia/videos/4.mp4", // Solariz
+                "http://45.172.160.51/vix-midia/videos/5.mp4", // VIX MIDIA
+                "http://45.172.160.51/vix-midia/videos/6.mp4", // Arraia Curio
+            ];
+</script>
+         
+
+
+            // Função para refresh automático após 10 minutos
+            setTimeout(() => {
+                location.reload(); // Recarrega a página
+            }, 10 * 60 * 1000); // 10 minutos em milissegundos
+
+
+            ///////////////////////////////
+
+            const openWeatherApiKey = "7123b26ed3e262ded9c628acc48106d2";
+        
+            // Array com os links de RSS
+        const rssUrls = [
+                "https://www.terra.com.br/rss/Controller?channelid=20e07ef2795b2310VgnVCM3000009af154d0RCRD&ctName=atomo-noticia", // Primeiro RSS
+                "https://g1.globo.com/rss/g1/economia/", // Segundo RSS (exemplo)
+                "https://rss.uol.com.br/feed/noticias.xml", // Terceiro RSS (exemplo)
+                "https://www.cnnbrasil.com.br/feed/", // Quarto RSS (exemplo)
+
+            ];
+
+            let currentRssIndex = 0; // Índice do RSS ativo
+            let headlines = [];
+            let manchetesExibidas = 0; // Contador de manchetes exibidas para alternar entre RSS
+
+            const player = document.getElementById("player");
+            const tempoDiv = document.getElementById("tempo");
+            const tempoIcon = document.getElementById("tempoIcon");
+            const mancheteLogo = document.getElementById("mancheteLogo");
+            const mancheteContentDiv = document.getElementById("manchete-content");
+
+            let currentVideoIndex = 0;
+            let currentHeadlineIndex = 0;
+
+            // Função para alternar o RSS
+            function alternarRss() {
+                currentRssIndex = (currentRssIndex + 1) % rssUrls.length; // Alterna entre os 3 RSS
+                carregarManchetes(); // Carregar manchetes do novo RSS
+            }
+            // Função para alternar entre os vídeos
+            function playNextVideo() {
+                player.src = videos[currentVideoIndex];
+                player.play();
+                currentVideoIndex = (currentVideoIndex + 1) % videos.length;
+            }
+
+            player.addEventListener("ended", playNextVideo);
+            playNextVideo();
+
+            function carregarManchetes() {
+                fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrls[currentRssIndex]}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        headlines = data.items.map(item => ({
+                            title: item.title,
+                            link: item.link,
+                            category: item.categories[0] || "Geral",
+                            logo: `https://logo.clearbit.com/${new URL(item.link).hostname}`
+                        }));
+
+                        if (headlines.length > 0) mostrarManchete();
+                    })
+                    .catch(error => console.error("Erro ao carregar manchetes:", error));
+            }
+
+            function mostrarManchete() {
+                if (headlines.length === 0) return;
+
+                const headline = headlines[currentHeadlineIndex];
+                mancheteLogo.src = headline.logo;
+                mancheteContentDiv.innerHTML = `
+                    <span id="manchete-category">${headline.category}:</span>
+                    <a href="${headline.link}" >${headline.title}</a>
+                `;
+
+                currentHeadlineIndex = (currentHeadlineIndex + 1) % headlines.length;
+                manchetesExibidas++;
+
+                // Alternar RSS após 3 manchetes exibidas
+                if (manchetesExibidas === 3) {
+                    manchetesExibidas = 0; // Reseta o contador
+                    alternarRss(); // Alterna para o próximo RSS
+                }
+            }
+
+            setInterval(mostrarManchete, 15000); // Alterna manchetes a cada 15 segundos
+            carregarManchetes();
+            setInterval(carregarManchetes, 300000); // Atualiza o RSS a cada 5 minutos
+
+            let etapaAtual = 0;
+
+            function carregarPrevisaoDoTempo() {
+                fetch(`https://api.openweathermap.org/data/2.5/weather?q=Fortaleza&units=metric&lang=pt_br&appid=${openWeatherApiKey}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        tempoDiv.querySelector("h2").textContent = `${data.name} - ${data.main.temp.toFixed(0)}°C`;
+                        tempoDiv.querySelector("p").textContent = `${data.weather[0].description}`;
+                        tempoIcon.className = "fas fa-cloud-sun";
+                    })
+                    .catch(() => {
+                        tempoDiv.innerHTML = `<h2>Erro ao obter clima</h2>`;
+                    });
+            }
+
+            function carregarCotacoes() {
+                fetch("https://economia.awesomeapi.com.br/last/USD-BRL,BTC-BRL")
+                    .then(response => response.json())
+                    .then(data => {
+                        const etapaCotacao = etapaAtual % 3;
+
+                        if (etapaCotacao === 1) {
+                            tempoDiv.querySelector("h2").textContent = "Dólar Hoje";
+                            tempoDiv.querySelector("p").textContent = `R$ ${parseFloat(data.USDBRL.bid).toFixed(2).replace('.', ',')}`;
+                            tempoIcon.className = "fas fa-dollar-sign";
+                        } else if (etapaCotacao === 2) {
+                            const valorBitcoin = parseFloat(data.BTCBRL.bid).toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL"
+                            });
+                            tempoDiv.querySelector("h2").textContent = "Bitcoin Hoje";
+                            tempoDiv.querySelector("p").textContent = `${valorBitcoin}`;
+                            tempoIcon.className = "fab fa-bitcoin";
+                        }
+                    });
+            }
+
+            function alternarClimaDolarBitcoin() {
+                etapaAtual = (etapaAtual + 1) % 3;
+
+                if (etapaAtual === 0) {
+                    carregarPrevisaoDoTempo();
+                } else {
+                    carregarCotacoes();
+                }
+            }
+
+            alternarClimaDolarBitcoin();
+            setInterval(alternarClimaDolarBitcoin, 15000);
+        });
+    </script>
+</body>
+
+</html>

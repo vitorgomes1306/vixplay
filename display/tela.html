@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel Senhas</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+</head>
+
+<body>
+    <div class="tela">
+        <!-- ESQUERDA -->
+        <div class="lado-esquerdo">
+            <div class="topo-esquerdo">Logo do contratante</div>
+
+            <div class="meio-esquerdo">
+                <iframe id="iframe-conteudo" src="http://45.172.160.51/display" frameborder="0"></iframe>
+                <div id="senha-chamada" class="senha-chamada">Senha 12</div>
+            </div>
+
+            <div class="rodape-esquerdo">
+                <div class="info-data">
+                    <img src="http://45.172.160.51/img/vixmidia_dark.png" alt="" width="100px">
+                    <i class="fa-solid fa-calendar-day"></i>
+                    <span id="data-hoje">--/--/----</span>
+                    
+                </div>
+                <div class="info-hora">
+                    <i class="fa-solid fa-clock"></i>
+                    <span id="relogio">--:--:--</span>
+                </div>
+            </div>
+        </div>
+        <!-- DIREITA -->
+        <div class="lado-direito">
+            <!-- Topo direito -->
+            <div class="topo-direito">
+                <div class="senha-atual">5</div>
+                <div class="titulo-chamadas">Últimas chamadas</div>
+            </div>
+
+            <!-- Senhas chamadas (agora empilhadas) -->
+            <div class="ultimas-senhas">
+                <div class="senha">Senha 5</div>
+                <div class="senha">Senha 4</div>
+                <div class="senha">Senha 3</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function atualizarDataHora() {
+            const dataElemento = document.getElementById('data-hoje');
+            const relogioElemento = document.getElementById('relogio');
+
+            const agora = new Date();
+
+            // Data no formato DD/MM/AAAA
+            const dia = String(agora.getDate()).padStart(2, '0');
+            const mes = String(agora.getMonth() + 1).padStart(2, '0');
+            const ano = agora.getFullYear();
+            dataElemento.textContent = `${dia}/${mes}/${ano}`;
+
+            // Hora no formato HH:MM:SS
+            const horas = String(agora.getHours()).padStart(2, '0');
+            const minutos = String(agora.getMinutes()).padStart(2, '0');
+            const segundos = String(agora.getSeconds()).padStart(2, '0');
+            relogioElemento.textContent = `${horas}:${minutos}:${segundos}`;
+        }
+
+        // Atualiza imediatamente e depois a cada segundo
+        atualizarDataHora();
+        setInterval(atualizarDataHora, 1000);
+
+
+    </script>
+
+    <script>
+        const iframe = document.getElementById('iframe-conteudo');
+        const senhaDiv = document.getElementById('senha-chamada');
+
+        let numeroSenha = 12;
+
+        function chamarSenha() {
+            // Oculta iframe e mostra senha
+            iframe.style.display = 'none';
+            senhaDiv.textContent = `Senha ${numeroSenha++}`;
+            senhaDiv.style.display = 'block';
+
+            // Após 6 segundos, volta para iframe
+            setTimeout(() => {
+                senhaDiv.style.display = 'none';
+                iframe.style.display = 'block';
+            }, 6000);
+        }
+
+        // Chama senha a cada 10 segundos
+        setInterval(chamarSenha, 10000);
+    </script>
+</body>
+
+</html>

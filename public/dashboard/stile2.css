@@ -1,0 +1,117 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background-color: #111;
+  color: #fff;
+  width: 100px;
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: fixed;
+  height: 100vh;
+  z-index: 1000;
+}
+
+.sidebar img {
+  width: 70px;
+  margin-bottom: 30px;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+  text-align: center;
+}
+
+.sidebar ul li {
+  width: 100%;
+  margin: 10px 0;
+}
+
+.sidebar-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: #fff;
+  padding: 10px 0;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar-link i {
+  font-size: 26px;
+  margin-bottom: 5px;
+}
+
+.sidebar-link span {
+  font-size: 12px;
+}
+
+.sidebar-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.sidebar hr {
+  border-top: 1px solid #555;
+  margin: 20px 0;
+}
+
+.content {
+  flex-grow: 1;
+  padding: 20px;
+  margin-left: 100px;
+  width: calc(100% - 100px);
+  transition: margin-left 0.3s ease;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .wrapper {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    padding: 10px;
+    position: relative;
+  }
+
+  .sidebar ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    width: 100%;
+  }
+
+  .sidebar ul li {
+    margin: 5px;
+    width: auto;
+  }
+
+  .sidebar-link span {
+    display: none;
+  }
+
+  .content {
+    margin-left: 0;
+    width: 100%;
+  }
+}

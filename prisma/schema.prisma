@@ -1,56 +1,246 @@
-// Quando gerar o banco de dados com o postgress, o nome da tabela deve ser o mesmo nome do model.
-// Caso contrário, o prisma não irá gerar o banco de dados.
-//Quando gerar uma nova tabela, executar o comando: npx prisma migrate dev --name init
-
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "windows"]
 }
 
 datasource db {
-      provider = "postgresql"
-      url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// Cria tabela de usuário
-model user { 
-  id      String   @id @default(cuid()) @unique
-  name    String
-  email   String   @unique
-  password String
+model User {
+  id              Int              @id @default(autoincrement())
+  name            String
+  cpfCNPJ         String?
+  email           String           @unique
+  password        String
+  // Propriedade que Define que um usuário pode ter vários painéis
+  panels          Panel[]
+  dateCreated     DateTime         @default(now())
+  dateUpdated     DateTime         @updatedAt
+  picture         String?
+  // Define se o usuário está ativo ou não
+  Active          Boolean          @default(false)
+  bloqued         Boolean          @default(false)
+  isAdmin         Boolean          @default(false)
+  CustomScreen    CustomScreen[]
+  clients         Clients[]        @relation("UserClients")
+  financialTitles FinancialTitle[]
+
+  // Mapear a tabela respeitando o case-sensitive do PostgreSQL
+  @@map("User")
 }
-// Cadastra painel
-model painel { 
-  id      String   @id @default(cuid()) @unique
-  name    String
-  layoutTelaCheia   Boolean @default(true)
+
+model Clients {
+  id          Int        @id @default(autoincrement())
+  name        String
+  cpfCNPJ     String?
+  email       String
+  adress      String?
+  active      Boolean    @default(true)
+  phone       String?
+  password    String
+  dateCreated DateTime   @default(now())
+  dateUpdated DateTime   @updatedAt
+  picture     String?
+  users       User[]     @relation("UserClients")
+  campaigns   Campaign[]
+
+  @@map("Clients")
+}
+
+model Campaign {
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  startDate     DateTime
+  endDate       DateTime
+  active        Boolean  @default(true)
+  clientId      Int
+  value         Decimal? @db.Decimal(10, 2)
+  paymentMethod String?
+  dueDate       DateTime?
+  paymentStatus String?  @default("PENDENTE")
+  dateCreated   DateTime @default(now())
+  dateUpdated   DateTime @updatedAt
+
+  // Relações
+  client         Clients         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  campaignValues CampaignValue[]
+
+  @@map("Campaign")
+}
+
+model CampaignValue {
+  id          Int      @id @default(autoincrement())
+  description String
+  value       Decimal  @db.Decimal(10, 2)
+  type        String // "ENTRADA" ou "SAIDA"
+  date        DateTime @default(now())
+  campaignId  Int
   dateCreated DateTime @default(now())
-  dateUpdated DateTime @updatedAt @default(now())
-  user_id String @unique
-}
-// Cadastra midias e item do painel ou midias
-model midias { 
-  id  String   @id @default(cuid()) @unique
-  name    String
-  type    String
-  url     String
-  painel_id String
-  dateCreated DateTime @default(now())
-  dateUpdated DateTime @updatedAt @default(now())
-  user_id String @unique
-  
+  dateUpdated DateTime @updatedAt
+
+  // Relações
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("CampaignValue")
 }
 
-// caso queira usar o Mongo, descomentar o código abaixo e comentar o código acima.
+model Panel {
+  id                    Int       @id @default(autoincrement())
+  name                  String?
+  userId                Int
+  description           String?
+  // Define o tipo de layout do painel: tela cheia (FULL_SCREEN) ou dividida (DIVIDED)
+  type                  PanelType @default(FULL_SCREEN)
+  // Configuração para layouts divididos (opcional)
+  active                Boolean   @default(true)
+  layout                Json? // JSON contendo informações de divisão de tela (percentuais)
+  showWeather           Boolean   @default(false)
+  showNews              Boolean   @default(false)
+  showLottery           Boolean   @default(false)
+  showCoins             Boolean   @default(false)
+  weatherFrequency      Int       @default(10)
+  newsFrequency         Int       @default(10)
+  lotteryFrequency      Int       @default(10)
+  coinsFrequency        Int       @default(10)
+  showCustomScreen      Boolean   @default(false) // Ativar/desativar tela editável
+  customScreenFrequency Int       @default(2) // Frequência de exibição da tela editável
+  customScreenContent   String? // Conteúdo editável (HTML/JSON serializado para layout)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-// model user {  // se usar Mongo
-//   id      String   @id @default(auto()) @map("_id") @db.ObjectId 
-//   email   String   @unique 
-//   name    String
-//   password String
+  // Relações existentes
+  medias  PanelMedia[]
+  devices Device[]
+  Media   Media[]
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("Panel")
+}
+
+model Media {
+  id         Int          @id @default(autoincrement())
+  title      String?
+  url        String
+  type       MediaType
+  duration   Int?
+  panelId    Int
+  panel      Panel        @relation(fields: [panelId], references: [id])
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  PanelMedia PanelMedia[]
+}
+
+model PanelMedia {
+  panelId Int
+  mediaId Int
+  panel   Panel @relation(fields: [panelId], references: [id])
+  media   Media @relation(fields: [mediaId], references: [id])
+
+  @@id([panelId, mediaId])
+}
+
+model Device {
+  id           Int          @id @default(autoincrement())
+  name         String
+  deviceKey    String       @unique
+  format       FormatDevice
+  panelId      Int
+  type         DeviceType
+  status       String       @default("Ativo")
+  statusDevice Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  geoLocation  String?
+
+  panel Panel @relation(fields: [panelId], references: [id])
+
+  @@map("Device")
+}
+
+model wifiUsers {
+  id             Int       @id @default(autoincrement())
+  name           String
+  email          String    @unique
+  password       String
+  cpfCNPJ        String    @unique
+  phoneNumber    String?
+  birthDate      DateTime
+  lastAccess     DateTime? @default(now())
+  active         Boolean   @default(true)
+  blocked        Boolean   @default(false)
+  profilePicture String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("wifiUsers")
+}
+
+// TELA CUSTOMIZADA
+model CustomScreen {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  userId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("CustomScreen")
+}
+
+enum PanelType {
+  FULL_SCREEN
+  DIVIDED
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+  RSS
+  WEATHER
+}
+
+enum DeviceType {
+  TV
+  MONITOR
+  TABLET
+  TOTEM
+  LED_PANEL
+  PROJECTOR
+  PC
+}
+
+enum FormatDevice {
+  HORIZONTAL
+  VERTICAL
+}
+
+model FinancialTitle {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  description     String
+  amount          Float
+  dueDate         DateTime
+  status          FinancialStatus @default(PENDING)
+  pixCode         String?
+  pixQrCode       String?
+  pagseguroId     String?
+  pagseguroStatus String?
+  paidAt          DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
   
-// }
+  @@map("FinancialTitle")
+}
 
-// datasource db {
-//   provider = "mongodb"
-//   url      = env("DATABASE_URL") 
-// }
+enum FinancialStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}

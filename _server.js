@@ -11,6 +11,13 @@ Inicio do servidor Express
 */
 app.use(express.json()); // Middleware para analisar o corpo das requisições como JSON
 
+// Servir arquivos estáticos do dashboard
+app.use(express.static('dashboard'));
+app.use(express.static('public'));
+
+// Configurar rotas públicas
+app.use('/public', publiRoutes); // Monta as rotas públicas com prefixo /public
+
 
 app.get('/', (req, res) => { // Rota raiz
     res.send('Hello World!'); // Responde com "Hello World!" quando a rota raiz é acessada

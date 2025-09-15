@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Panel" ADD COLUMN     "coinsFrequency" INTEGER NOT NULL DEFAULT 10,
+ADD COLUMN     "showCoins" BOOLEAN NOT NULL DEFAULT false,
+ALTER COLUMN "lotteryFrequency" SET DEFAULT 10,
+ALTER COLUMN "newsFrequency" SET DEFAULT 10,
+ALTER COLUMN "weatherFrequency" SET DEFAULT 10;

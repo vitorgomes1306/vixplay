@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vix Mídia - Relatórios</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="modern-dashboard.css">
+</head>
+
+<body>
+  <!-- Overlay para sidebar em dispositivos móveis -->
+  <div class="sidebar-overlay"></div>
+
+  <div class="wrapper">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <img src="../img/vixmidia_dark.png" alt="Logo VixMídia" class="img-fluid">
+        <button class="sidebar-toggle">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+      </div>
+
+      <ul class="list-unstyled">
+        <li>
+          <a class="sidebar-link" href="index.html">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="dispositivos.html">
+            <i class="bi bi-tv"></i>
+            <span>Dispositivos</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="paineis.html">
+            <i class="bi bi-pip-fill"></i>
+            <span>Painéis</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="midias.html">
+            <i class="bi bi-collection-play"></i>
+            <span>Mídias</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="clients.html">
+            <i class="bi bi-person-video2"></i>
+            <span>Clientes</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="campaigns.html">
+            <i class="bi bi-megaphone"></i>
+            <span>Campanhas</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link active" href="relatorios.html">
+            <i class="bi bi-clipboard2-pulse"></i>
+            <span>Relatórios</span>
+          </a>
+        </li>
+      </ul>
+
+      <hr>
+
+      <ul class="list-unstyled">
+        <li>
+          <a class="sidebar-link" href="configuracoes.html">
+            <i class="bi bi-gear"></i>
+            <span>Configurações</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" id="logoutBtnSidebar">
+            <i class="bi bi-box-arrow-left"></i>
+            <span>Sair</span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Informações do usuário -->
+      <div class="sidebar-footer mt-auto">
+        <div class="d-flex align-items-center mb-3">
+          <div class="sidebar-user-icon me-2">
+            <i class="bi bi-person-circle text-white" style="font-size: 1.5rem;"></i>
+          </div>
+          <div class="sidebar-user-info">
+            <span id="userName" class="text-white">Usuário</span>
+          </div>
+        </div>
+        <!-- Toggle de tema claro/escuro -->
+        <div class="px-0 py-2">
+          <div class="form-check form-switch d-flex align-items-center">
+            <input class="form-check-input me-2" type="checkbox" id="themeToggle">
+            <label class="form-check-label text-white" for="themeToggle">
+              <i class="bi bi-moon"></i>
+              <span class="ms-2">Modo Escuro</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <main class="content">
+      <!-- Cabeçalho da Página -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Relatórios</h1>
+          <p class="page-subtitle">Visualize e analise seus dados</p>
+        </div>
+        <div class="d-flex align-items-center">
+          <!-- Barra de pesquisa -->
+          <div class="search-container me-3 position-relative">
+            <input type="text" class="form-control search-input" placeholder="Buscar relatórios...">
+            <i class="bi bi-search search-icon"></i>
+            <div class="search-results shadow-sm"></div>
+          </div>
+          <!-- Botão de gerar relatório -->
+          <button class="btn btn-primary me-2">
+            <i class="bi bi-file-earmark-plus me-2"></i> Gerar Relatório
+          </button>
+          <!-- Ícone de configuração -->
+          <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#configModal" title="Configurações">
+            <i class="bi bi-gear"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Container de alertas -->
+      <div id="alertContainer"></div>
+
+      <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2"><i class="bi bi-clipboard2-pulse me-2"></i>Relatórios</h1>
+                </div>
+
+                <!-- Cards de Relatórios -->
+                <div class="row">
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="bi bi-graph-up text-primary" style="font-size: 3rem;"></i>
+                                <h5 class="card-title mt-3">Relatório Mensal</h5>
+                                <p class="card-text">Visualize o desempenho consolidado de todas as campanhas por mês, incluindo investimentos, entradas, saídas e lucros.</p>
+                                <a href="relatorio-mensal.html" class="btn btn-primary">
+                                    <i class="bi bi-eye me-2"></i>Visualizar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="bi bi-bar-chart text-success" style="font-size: 3rem;"></i>
+                                <h5 class="card-title mt-3">Relatório por Cliente</h5>
+                                <p class="card-text">Analise o desempenho das campanhas agrupadas por cliente, identificando os mais lucrativos.</p>
+                                <button class="btn btn-outline-secondary" disabled>
+                                    <i class="bi bi-clock me-2"></i>Em Breve
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="bi bi-calendar-range text-info" style="font-size: 3rem;"></i>
+                                <h5 class="card-title mt-3">Relatório Personalizado</h5>
+                                <p class="card-text">Crie relatórios customizados com períodos específicos e filtros avançados.</p>
+                                <button class="btn btn-outline-secondary" disabled>
+                                    <i class="bi bi-clock me-2"></i>Em Breve
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="bi bi-pie-chart text-warning" style="font-size: 3rem;"></i>
+                                <h5 class="card-title mt-3">Dashboard Executivo</h5>
+                                <p class="card-text">Visão executiva com KPIs principais e gráficos de performance em tempo real.</p>
+                                <button class="btn btn-outline-secondary" disabled>
+                                    <i class="bi bi-clock me-2"></i>Em Breve
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="bi bi-file-earmark-excel text-success" style="font-size: 3rem;"></i>
+                                <h5 class="card-title mt-3">Exportação de Dados</h5>
+                                <p class="card-text">Exporte dados das campanhas em diversos formatos (Excel, PDF, CSV) para análises externas.</p>
+                                <button class="btn btn-outline-secondary" disabled>
+                                    <i class="bi bi-clock me-2"></i>Em Breve
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="bi bi-envelope text-primary" style="font-size: 3rem;"></i>
+                                <h5 class="card-title mt-3">Relatórios Automáticos</h5>
+                                <p class="card-text">Configure o envio automático de relatórios por email em períodos definidos.</p>
+                                <button class="btn btn-outline-secondary" disabled>
+                                    <i class="bi bi-clock me-2"></i>Em Breve
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informações Adicionais -->
+                <div class="alert alert-info mt-4">
+                    <h5 class="alert-heading"><i class="bi bi-info-circle me-2"></i>Sobre os Relatórios</h5>
+                    <p class="mb-0">Os relatórios são atualizados em tempo real com base nos dados das suas campanhas. O <strong>Relatório Mensal</strong> já está disponível e oferece uma visão completa do desempenho consolidado de todas as campanhas.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

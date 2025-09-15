@@ -1,0 +1,289 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #000;
+    color: #fff;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  #mainContainer {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #videoContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: black;
+    overflow: hidden;
+    transition: background-image 0.3s ease-in-out; /* Suaviza a troca de backgroundImage */
+  }
+
+  #videoPlayer {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: black; /* Fundo preto para cobrir possíveis delays no carregamento */
+  }
+
+  #keyDisplay {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: none; /* Inicialmente oculto, mas mantemos para referência */
+    text-align: center;
+  }
+
+  #keyDisplay img {
+    width: auto;
+    max-width: 300px;
+    height: auto;
+    opacity: 0;
+    animation: fadeIn 1s ease-in-out forwards;
+  }
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
+
+  #generatedKey {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .key-box {
+    width: 80px;
+    height: 80px;
+    font-size: 2.5em;
+    background-color: #111;
+    border: 2px solid #444;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(255, 255, 255, 0.05);
+    cursor: default;
+  }
+
+  .key-box:hover {
+    background-color: #222;
+    border-color: #888;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+  }
+
+  #instruction {
+    font-size: 1.5em;
+    margin-top: 20px;
+    color: #ccc;
+    position: absolute;
+    top: calc(50% + 100px); /* Aumentado para garantir que fique abaixo da logo e chaves */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    /* max-width: 800px; Limita a largura para melhor legibilidade */
+    text-align: center;
+  }
+
+  /* Nova div para informações adicionais */
+  #extraContainer {
+    display: none; /* Por padrão, está oculta */
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%; /* Ocupa 80% da largura da tela */
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.8); /* Fundo preto com leve transparência */
+    color: white;
+    border-radius: 10px; /* Bordas arredondadas */
+    box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1); /* Sombra suave */
+  }
+
+  .container {
+display: flex;
+gap: 20px;
+flex-direction: row;
+text-align:left;
+}
+
+.item:nth-child(1) {
+width: 100%;
+height: 20%;
+flex-basis: 30%;
+}
+
+.item:nth-child(2) {
+width: 100%;
+height: 20%;
+flex-basis: 2%;
+}
+
+.item:nth-child(3) {
+width: 100%;
+height: 20%;
+flex-basis: 100%;
+}
+video {
+  /* max-width: 100%;
+  max-height: 100%; */
+}
+
+#videoContainer img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+}
+
+.rss-item {
+  border-bottom: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.rss-item h3 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.rss-item p {
+  font-size: 14px;
+  color: #555;
+  margin: 5px 0;
+}
+
+.rss-item a {
+  font-size: 14px;
+  color: #3498db;
+  text-decoration: none;
+}
+
+.rss-item a:hover {
+  text-decoration: underline;
+}
+
+#megaSenaPanel {
+  background-color: rgba(252, 64, 1, 0.9);
+  color: white;
+  text-align: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  font-family: poppins, sans-serif;
+}
+
+#megaSenaPanel img {
+  width: 300px;
+  margin-bottom: 30px;
+}
+
+#megaSenaPanel h2 {
+  margin-bottom: 20px;
+  font-size: 2.5em;
+}
+
+#megaSenaNumbers {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+.megaSenaBall {
+  width: 100px;
+  height: 100px;
+  background-color: #209869; /* Verde característico da Mega-Sena */
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3em;
+  font-weight: bold;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+#megaSenaResult {
+  font-size: 1.5em;
+  margin-top: 20px;
+}
+
+/* Tela de sistema offline */
+#offlineDisplay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.offline-container {
+  text-align: center;
+  padding: 40px;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(255, 255, 255, 0.1);
+  max-width: 600px;
+  width: 90%;
+}
+
+.offline-container .logo-image {
+  width: auto;
+  max-width: 250px;
+  height: auto;
+  margin-bottom: 30px;
+  opacity: 0;
+  animation: fadeIn 1s ease-in-out forwards;
+}
+
+.offline-message h1 {
+  font-size: 3.5em;
+  color: #ff6b6b;
+  margin-bottom: 20px;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.offline-message p {
+  font-size: 2em;
+  color: #ffffff;
+  margin: 0;
+  font-weight: 400;
+  opacity: 0.9;
+}

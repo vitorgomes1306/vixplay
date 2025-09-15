@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gerenciar Mídias - Painel</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="modern-dashboard.css">
+    <!-- Config JS -->
+    <script src="../js/config.js"></script>
+</head>
+
+<body>
+    <!-- Overlay para sidebar em dispositivos móveis -->
+    <div class="sidebar-overlay"></div>
+
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="../img/vixmidia_dark.png" alt="Logo VixMídia" class="img-fluid">
+                <button class="sidebar-toggle">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+            </div>
+
+            <ul class="list-unstyled">
+                <li>
+                    <a class="sidebar-link" href="index.html">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="sidebar-link" href="dispositivos.html">
+                        <i class="bi bi-tv"></i>
+                        <span>Dispositivos</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="sidebar-link active" href="panels.html">
+                        <i class="bi bi-grid-3x3"></i>
+                        <span>Painéis</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="sidebar-link" href="campaigns.html">
+                        <i class="bi bi-megaphone"></i>
+                        <span>Campanhas</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="sidebar-link" href="clients.html">
+                        <i class="bi bi-people"></i>
+                        <span>Clientes</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="sidebar-link" href="relatorios.html">
+                        <i class="bi bi-bar-chart"></i>
+                        <span>Relatórios</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name">Usuário</div>
+                        <div class="user-email">usuario@email.com</div>
+                    </div>
+                </div>
+                <button class="btn btn-outline-light btn-sm w-100 mt-2" id="logoutBtn">
+                    <i class="bi bi-box-arrow-right me-1"></i>Sair
+                </button>
+
+                <!-- Toggle de tema claro/escuro -->
+                <div class="px-0 py-2">
+                    <div class="form-check form-switch d-flex align-items-center">
+                        <input class="form-check-input me-2" type="checkbox" id="themeToggle">
+                        <label class="form-check-label text-white" for="themeToggle">
+                            <i class="bi bi-moon"></i>
+                            <span class="ms-2">Modo Escuro</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Conteúdo Principal -->
+        <main class="content">
+            <div class="container-fluid">
+                <!-- Cabeçalho da Página -->
+                <div class="page-header">
+                    <div>
+                        <nav aria-label="breadcrumb" class="mb-2">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Painel: <span id="painelNome"></span></li>
+                            </ol>
+                        </nav>
+                        <h1 class="page-title">Gerenciar Mídias - <span id="painelTitulo"></span></h1>
+                        <p class="page-subtitle">ID do Painel: <span id="painelId"></span></p>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <button id="addMidiaBtn" class="btn btn-success me-2">
+                            <i class="bi bi-plus-circle"></i> Adicionar Mídia
+                        </button>
+                        <a href="index.html" class="btn btn-secondary me-2">
+                            <i class="bi bi-arrow-left"></i> Voltar
+                        </a>
+                        <!-- Ícone de configuração -->
+                        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#configModal" title="Configurações">
+                            <i class="bi bi-gear"></i>
+                        </button>
+                    </div>
+                </div>
+        <!-- Lista de Mídias -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Mídias do Painel</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="midias" class="row g-3">
+                            <!-- Mídias serão carregadas aqui -->
+                        </div>
+                        <div id="semMidias" class="text-center text-muted py-5 d-none">
+                            <i class="bi bi-collection display-1"></i>
+                            <p class="mt-3">Nenhuma mídia adicionada ainda.</p>
+                            <button class="btn btn-success" onclick="document.getElementById('addMidiaBtn').click()">
+                                Adicionar primeira mídia
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertas -->
+        <div id="alertaErro" class="alert alert-danger mt-3 d-none"></div>
+        <div id="alertaSucesso" class="alert alert-success mt-3 d-none"></div>
+    </div>
+
+    <!-- Modal de Confirmação para Excluir Mídia -->
+    <div class="modal fade" id="modalConfirmarExclusao" tabindex="-1" aria-labelledby="modalConfirmarExclusaoLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="modalConfirmarExclusaoLabel">Excluir Mídia</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmarExclusaoMensagem" class="mb-0">Tem certeza de que deseja excluir esta mídia?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarExclusao">Sim, Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para adicionar mídia -->
+    <div class="modal fade" id="addMidiaModal" tabindex="-1" aria-labelledby="addMidiaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addMidiaModalLabel">Adicionar Nova Mídia</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Abas para escolher entre Upload e URL -->
+                    <ul class="nav nav-tabs" id="midiaTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="upload-tab" data-bs-toggle="tab"
+                                data-bs-target="#upload" type="button" role="tab">
+                                <i class="bi bi-cloud-upload"></i> Upload de Arquivo
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="url-tab" data-bs-toggle="tab" data-bs-target="#url"
+                                type="button" role="tab">
+                                <i class="bi bi-link-45deg"></i> URL Externa
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content mt-3" id="midiaTabContent">
+                        <!-- Aba Upload -->
+                        <div class="tab-pane fade show active" id="upload" role="tabpanel">
+                            <form id="uploadMidiaForm" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="uploadTitle" class="form-label">Título da Mídia</label>
+                                    <input type="text" class="form-control" id="uploadTitle"
+                                        placeholder="Digite o título da mídia">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="fileInput" class="form-label">Selecionar Arquivo</label>
+                                    <input type="file" class="form-control" id="fileInput"
+                                        accept="image/*,video/*,audio/*,.pdf,.doc,.docx">
+                                    <div class="form-text">
+                                        Tipos suportados: Imagens (JPG, PNG, GIF), Vídeos (MP4, AVI, MOV), Áudios (MP3,
+                                        WAV), Documentos (PDF, DOC)
+                                        <br>Tamanho máximo: 100MB
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="duration" class="form-label">Duração</label>
+                                    <input type="number" class="form-control" id="duration"
+                                        placeholder="Tempo (em segundos)">
+                                    <div class="form-text">Tempo de exibição da mídia em segundos (padrão: 10s para
+                                        fotos).</div>
+                                </div>
+                                
+                                <div class="mb-3" id="uploadPreviewContainer" style="display: none;">
+                                    <label class="form-label">Preview</label>
+                                    <div id="uploadPreview" class="border rounded p-3 bg-light"></div>
+                                </div>
+                                <div class="progress mb-3" id="uploadProgress" style="display: none;">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                            </form>
+                        </div>
+                        <!-- Aba URL -->
+                        <div class="tab-pane fade" id="url" role="tabpanel">
+                            <form id="urlMidiaForm">
+                                <div class="mb-3">
+                                    <label for="urlTitle" class="form-label">Título da Mídia</label>
+                                    <input type="text" class="form-control" id="urlTitle"
+                                        placeholder="Digite o título da mídia">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="midiaType" class="form-label">Tipo de Mídia</label>
+                                    <select class="form-select" id="midiaType" required>
+                                        <option value="">Selecione o tipo</option>
+                                        <option value="image">Imagem</option>
+                                        <option value="video">Vídeo</option>
+                                        
+                                        
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="midiaUrl" class="form-label">URL da Mídia</label>
+                                    <input type="url" class="form-control" id="midiaUrl"
+                                        placeholder="https://exemplo.com/midia.mp4">
+                                    <div class="form-text">Digite a URL de um vídeo, áudio ou outro conteúdo.</div>
+                                </div>
+                               
+                                <div class="mb-3">
+                                    <label for="urlDuration" class="form-label">Duração</label>
+                                    <input type="text" class="form-control" id="urlDuration"
+                                        placeholder="Duração em segundos (automático)">
+                                    <div class="form-text">Se a URL for de um vídeo, a duração será detectada
+                                        automaticamente.</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Preview</label>
+                                    <div id="urlPreviewContainer" class="border rounded p-3 bg-light">
+                                        <p class="text-muted mb-0">Digite uma URL para gerar o preview.</p>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="salvarMidiaBtn">Salvar Mídia</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar mídia -->
+    <div class="modal fade" id="editMidiaModal" tabindex="-1" aria-labelledby="editMidiaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editMidiaModalLabel">Editar Mídia</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editMidiaForm">
+                        <input type="hidden" id="editMidiaId">
+
+                        <div class="mb-3">
+                            <label for="editTitle" class="form-label">Título da Mídia</label>
+                            <input type="text" class="form-control" id="editTitle"
+                                placeholder="Digite o título da mídia">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editUrl" class="form-label">URL da Mídia</label>
+                            <input type="url" class="form-control" id="editUrl"
+                                placeholder="https://exemplo.com/midia.jpg">
+                            <div class="form-text">Deixe em branco para manter o arquivo atual</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDuration" class="form-label">Duração</label>
+                            <input type="number" class="form-control" id="editDuration"
+                                placeholder="Tempo (em segundos)">
+                            <div class="form-text">Tempo de exibição da mídia em segundos.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editType" class="form-label">Tipo de Mídia</label>
+                            <select class="form-select" id="editType" required>
+                                <option value="">Selecione o tipo</option>
+                                <option value="image">Imagem</option>
+                                <option value="video">Vídeo</option>
+                                <option value="audio">Áudio</option>
+                                <option value="document">Documento</option>
+                                <option value="other">Outro</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Preview Atual</label>
+                            <div id="editPreviewContainer" class="border rounded p-3 bg-light">
+                                <!-- Preview será carregado aqui -->
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="salvarEdicaoBtn">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal para visualizar a imagem em tamanho real -->
+    <div class="modal fade" id="modalVisualizarFoto" tabindex="-1" aria-labelledby="modalVisualizarFotoTitulo"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalVisualizarFotoTitulo">Visualizar Imagem</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="imagemEmTamanhoReal" src="" alt="Imagem Ampliada" class="img-fluid rounded">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        const painelAtual = JSON.parse(localStorage.getItem('painelAtual') || '{}');
+        const urlParams = new URLSearchParams(window.location.search);
+        const painelIdFromUrl = urlParams.get('id');
+
+        const painelId = painelAtual.id || painelIdFromUrl;
+        const painelNome = painelAtual.name || 'Painel';
+
+        const alertaErro = document.getElementById('alertaErro');
+        const alertaSucesso = document.getElementById('alertaSucesso');
+        const midiasContainer = document.getElementById('midias');
+        const semMidiasDiv = document.getElementById('semMidias');
+
+        if (!token) {
+            window.location.href = "/";
+        }
+
+        if (!painelId) {
+            alert('Painel não encontrado!');
+            window.location.href = "index.html";
+        }
+
+        document.getElementById('painelNome').textContent = painelNome;
+        document.getElementById('painelTitulo').textContent = painelNome;
+        document.getElementById('painelId').textContent = painelId;
+
+        function mostrarAlerta(tipo, mensagem) {
+            const alerta = tipo === 'erro' ? alertaErro : alertaSucesso;
+            const outroAlerta = tipo === 'erro' ? alertaSucesso : alertaErro;
+
+            outroAlerta.classList.add('d-none');
+            alerta.textContent = mensagem;
+            alerta.classList.remove('d-none');
+
+            setTimeout(() => {
+                alerta.classList.add('d-none');
+            }, 5000);
+        }
+
+        function criarPreview(url, type) {
+            if (!url) return '<p class="text-muted">Mídia não disponível</p>';
+
+            switch (type?.toUpperCase()) {
+                case 'PHOTO': // Para fotos
+                    return `<img src="${url}" class="img-fluid rounded" style="max-height: 200px;">`;
+                case 'VIDEO': // Para vídeos
+                    return `<video controls class="w-100" style="max-height: 200px;">
+                        <source src="${url}" type="video/mp4">
+                    </video>`;
+                case 'AUDIO': // Para áudios
+                    return `<audio controls class="w-100">
+                        <source src="${url}" type="audio/mpeg">
+                    </audio>`;
+                case 'DOCUMENT': // Para documentos
+                    return `<a href="${url}" class="btn btn-secondary w-100" >
+                        <i class="bi bi-file-earmark"></i> Abrir Documento
+                    </a>`;
+                default: // Para outros tipos de mídia
+                    return `<div class="text-center p-3">
+                        <i class="bi bi-file-earmark display-4"></i>
+                        <p class="mt-2 mb-0">Clique para visualizar</p>
+                    </div>`;
+            }
+        }
+
+        function criarPreviewArquivo(file) {
+            const fileType = file.type;
+            const fileUrl = URL.createObjectURL(file);
+
+            if (fileType.startsWith('image/')) {
+                return `<img src="${fileUrl}" class="img-fluid rounded" style="max-height: 200px;">`;
+            } else if (fileType.startsWith('video/')) {
+                return `<video controls class="w-100" style="max-height: 200px;">
+                            <source src="${fileUrl}" type="${fileType}">
+                        </video>`;
+            } else if (fileType.startsWith('audio/')) {
+                return `<audio controls class="w-100">
+                            <source src="${fileUrl}" type="${fileType}">
+                        </audio>`;
+            } else {
+                return `<div class="text-center p-3">
+                            <i class="bi bi-file-earmark display-4"></i>
+                            <p class="mt-2 mb-0">${file.name}</p>
+                            <small class="text-muted">Tamanho: ${(file.size / 1024 / 1024).toFixed(2)} MB</small>
+                        </div>`;
+            }
+        }
+        function renderizarMidias(midias) {
+            if (!midias || midias.length === 0) {
+                midiasContainer.innerHTML = '';
+                semMidiasDiv.classList.remove('d-none');
+                return;
+            }
+
+            semMidiasDiv.classList.add('d-none');
+
+            // Renderiza cada mídia
+            midiasContainer.innerHTML = midias.map(midia => {
+                const isPhoto = midia.type?.toUpperCase() === 'PHOTO'; // Verifica se o tipo é PHOTO
+                const isVideo = midia.type?.toUpperCase() === 'VIDEO'; // Verifica se o tipo é VIDEO
+                const isAudio = midia.type?.toUpperCase() === 'AUDIO'; // Verifica se o tipo é AUDIO
+                const isDocument = midia.type?.toUpperCase() === 'DOCUMENT'; // Verifica se o tipo é DOCUMENTO
+
+                return `
+            <div class="col-md-6 col-lg-4" id="midia-${midia.id}">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">${midia.title || 'Sem título'}</h6>
+                        <div class="mb-2">
+                            ${isPhoto
+                        // Caso seja uma imagem (PHOTO)
+                        ? `<img 
+                                        src="${midia.url}" 
+                                        alt="${midia.title || 'Imagem'}" 
+                                        class="img-fluid rounded" 
+                                        style="cursor: pointer; max-height: 200px;" 
+                                        onclick="abrirModalVisualizarFoto('${midia.url}', '${midia.title || 'Imagem'}')"
+                                       >`
+                        : isVideo
+                            // Caso seja um vídeo (VIDEO)
+                            ? `<video controls class="w-100" style="max-height: 200px;">
+                                             <source src="${midia.url}" type="video/mp4">
+                                           </video>`
+                            : isAudio
+                                // Caso seja um áudio (AUDIO)
+                                ? `<audio controls class="w-100">
+                                                 <source src="${midia.url}" type="audio/mpeg">
+                                               </audio>`
+                                : isDocument
+                                    // Caso seja um documento (DOCUMENT)
+                                    ? `<a href="${midia.url}" class="btn btn-secondary w-100" >
+                                                     <i class="bi bi-file-earmark"></i> Abrir Documento
+                                                   </a>`
+                                    // Caso seja outro tipo de mídia
+                                    : `<div class="text-center p-3">
+                                                     <i class="bi bi-file-earmark display-4"></i>
+                                                     <p class="mt-2 mb-0">${midia.title || 'Mídia'}</p>
+                                                     <small class="text-muted">${midia.url}</small>
+                                                   </div>`
+                    }
+                        </div>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                Tipo: ${midia.type || 'N/A'}<br>
+                                ID: ${midia.id}
+                            </small>
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-sm btn-primary me-2" onclick="editarMidia(${midia.id})">
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="excluirMidia(${midia.id}, '${(midia.title || 'esta mídia').replace(/'/g, "\'")}')">
+                            <i class="bi bi-trash"></i> Excluir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+            }).join('');
+        }
+
+        async function carregarMidias() {
+            try {
+                console.log('Carregando mídias do painel:', painelId);
+
+                const resposta = await fetch(`${buildApiUrl('/private/panel')}/${painelId}/midias`, {
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    }
+                });
+
+                if (!resposta.ok) {
+                    if (resposta.status === 404) {
+                        renderizarMidias([]);
+                        return;
+                    }
+                    throw new Error(`Erro ${resposta.status}: ${resposta.statusText}`);
+                }
+
+                const midias = await resposta.json();
+                console.log('Mídias carregadas:', midias);
+                renderizarMidias(midias);
+
+            } catch (err) {
+                console.error('Erro ao carregar mídias:', err);
+                mostrarAlerta('erro', 'Erro ao carregar mídias: ' + err.message);
+                renderizarMidias([]);
+            }
+        }
+
+        async function adicionarMidiaUpload() {
+            const title = document.getElementById('uploadTitle').value.trim();
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const duration = parseInt(document.getElementById('duration').value) || 10; // Duração padrão
+
+            if (!file) {
+                mostrarAlerta('erro', 'Por favor, selecione um arquivo');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file); // O nome do campo deve ser "file"
+            formData.append('title', title || file.name); // Título do arquivo
+            formData.append('panelId', painelId); // ID do painel
+            formData.append('duration', duration); // Tempo de exibição da mídia
+
+            // Mostrar barra de progresso e configurar o componente
+            const progressContainer = document.getElementById('uploadProgress');
+            const progressBar = progressContainer.querySelector('.progress-bar');
+            progressContainer.style.display = 'block'; // Exibe a barra de progresso
+            progressBar.style.width = '0%'; // Reinicia o progresso
+
+            try {
+                const xhr = new XMLHttpRequest();
+
+                // Atualizar a barra de progresso durante o upload
+                xhr.upload.addEventListener('progress', (event) => {
+                    if (event.lengthComputable) {
+                        const percentComplete = (event.loaded / event.total) * 100;
+                        progressBar.style.width = `${percentComplete}%`;
+                        progressBar.textContent = `${Math.round(percentComplete)}%`;
+                    }
+                });
+
+                // Configura a Promise para aguardar conclusão do envio
+                const uploadPromise = new Promise((resolve, reject) => {
+                    xhr.onload = function () {
+                        if (xhr.status === 201) {
+                            resolve(JSON.parse(xhr.responseText)); // Resposta JSON do backend
+                        } else {
+                            const errorResponse = JSON.parse(xhr.responseText);
+                            reject(new Error(errorResponse.error || 'Erro no envio.'));
+                        }
+                    };
+
+                    xhr.onerror = function () {
+                        reject(new Error('Erro de rede durante o envio.'));
+                    };
+                });
+
+                // Configurar e enviar a requisição
+                xhr.open('POST', buildApiUrl('/private/uploadmidia'));
+                xhr.setRequestHeader('Authorization', `Bearer ${token}`); // Token de autenticação (se necessário)
+                xhr.send(formData);
+
+                // Aguarda o resultado do upload
+                const resultado = await uploadPromise;
+
+                console.log('✅ Upload realizado com sucesso:', resultado);
+
+                // Alerta de sucesso
+                mostrarAlerta('sucesso', 'Mídia enviada com sucesso!');
+
+                // Fecha o modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addMidiaModal'));
+                modal.hide();
+
+                // Limpa os campos e reseta o estado do formulário
+                document.getElementById('uploadMidiaForm').reset();
+                document.getElementById('uploadPreviewContainer').style.display = 'none';
+                progressContainer.style.display = 'none';
+
+                // Recarrega a lista de mídias
+                carregarMidias();
+            } catch (err) {
+                console.error('❌ Erro no upload:', err);
+                mostrarAlerta('erro', `Erro ao enviar a mídia: ${err.message}`);
+
+                // Oculta a barra de progresso ao ocorrer erro
+                progressContainer.style.display = 'none';
+            }
+        }
+
+        async function adicionarMidiaUrl() {
+    const title = document.getElementById('urlTitle').value.trim();
+    const url = document.getElementById('midiaUrl').value.trim();
+    const type = document.getElementById('midiaType').value;
+    const duration = parseInt(document.getElementById('urlDuration').value) || 10; // Lê o valor no campo duration ou define 10 como padrão
+
+    console.log('=== ADICIONANDO MÍDIA POR URL ===');
+    console.log('Título:', title);
+    console.log('URL:', url);
+    console.log('Tipo:', type);
+    console.log('Duração:', duration);
+
+    if (!url || !type) {
+        mostrarAlerta('erro', 'URL e tipo de mídia são obrigatórios.');
+        return;
+    }
+
+    const dadosEnvio = {
+        title: title || null,
+        url: url,
+        type: type.toUpperCase(),
+        duration: duration, // Inclui a duração calculada
+        panelId: parseInt(painelId),
+    };
+
+    try {
+        const resposta = await fetch(buildApiUrl('/private/addmidia'), {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token,
+            },
+            body: JSON.stringify(dadosEnvio),
+        });
+
+        const dadosResposta = await resposta.json();
+
+        if (resposta.ok) {
+            console.log('✅ Mídia criada com sucesso:', dadosResposta);
+            mostrarAlerta('sucesso', 'Mídia adicionada com sucesso!');
+
+            // Fecha o modal de adicionar mídia
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addMidiaModal'));
+            modal.hide();
+
+            // Limpa o formulário
+            document.getElementById('urlMidiaForm').reset();
+            document.getElementById('urlPreviewContainer').innerHTML = '<p class="text-muted mb-0">Digite uma URL para gerar o preview.</p>';
+
+            // Atualiza a lista de mídias
+            setTimeout(() => {
+                carregarMidias();
+            }, 500);
+        } else {
+            console.error('❌ Erro ao adicionar mídia:', dadosResposta);
+            mostrarAlerta('erro', dadosResposta.error || 'Erro desconhecido.');
+        }
+    } catch (err) {
+        console.error('❌ Erro ao adicionar mídia:', err);
+        mostrarAlerta('erro', 'Erro de conexão: ' + err.message);
+    }
+}
+
+        async function editarMidia(id) {
+            try {
+                console.log('Carregando mídia para edição:', id);
+
+                const resposta = await fetch(`/public/midia/${id}`, {
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    }
+                });
+
+                if (!resposta.ok) {
+                    throw new Error('Mídia não encontrada');
+                }
+
+                const midia = await resposta.json(); // Obtemos os dados da mídia do backend
+                console.log('Mídia carregada:', midia);
+
+                // Preencher o formulário de edição com os valores da mídia
+                document.getElementById('editMidiaId').value = midia.id;
+                document.getElementById('editTitle').value = midia.title || '';
+                document.getElementById('editUrl').value = midia.url || '';
+                document.getElementById('editDuration').value = midia.duration || ''; // Preencher o campo duration!
+
+                // Mapear o tipo do Prisma para o formulário
+                const typeMapping = {
+                    'PHOTO': 'image',
+                    'VIDEO': 'video',
+                    'AUDIO': 'audio',
+                    'DOCUMENT': 'document'
+                };
+
+                document.getElementById('editType').value = typeMapping[midia.type] || 'other';
+
+                // Mostrar o preview atual
+                const previewContainer = document.getElementById('editPreviewContainer');
+                previewContainer.innerHTML = criarPreview(midia.url, midia.type);
+
+                // Abrir o modal
+                const modal = new bootstrap.Modal(document.getElementById('editMidiaModal'));
+                modal.show();
+
+            } catch (err) {
+                console.error('Erro ao carregar mídia para edição:', err);
+                mostrarAlerta('erro', 'Erro ao carregar mídia: ' + err.message);
+            }
+        }
+
+        async function salvarEdicaoMidia() {
+            const id = document.getElementById('editMidiaId').value;
+            const title = document.getElementById('editTitle').value.trim();
+            const url = document.getElementById('editUrl').value.trim();
+            const type = document.getElementById('editType').value;
+            const duration = parseInt(document.getElementById('editDuration').value.trim()) || null; // Lê o campo duration
+
+            if (!type) {
+                mostrarAlerta('erro', 'Tipo de mídia é obrigatório');
+                return;
+            }
+
+            const dadosAtualizacao = {
+                title: title || null,
+                type: type,
+                duration: duration // Inclui o campo duration nos dados enviados
+            };
+
+            // Só incluir URL se foi alterada
+            if (url) {
+                dadosAtualizacao.url = url;
+            }
+
+            try {
+                console.log('Atualizando mídia:', id, dadosAtualizacao);
+
+                const resposta = await fetch(`${buildApiUrl('/private/midia')}/${id}`, {
+                    method: 'PUT', 
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+                    body: JSON.stringify(dadosAtualizacao)
+                });
+
+                const resultado = await resposta.json();
+
+                if (resposta.ok) {
+                    console.log('✅ Mídia atualizada:', resultado);
+                    mostrarAlerta('sucesso', 'Mídia atualizada com sucesso!');
+
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editMidiaModal'));
+                    modal.hide();
+
+                    setTimeout(() => {
+                        carregarMidias();
+                    }, 500);
+                } else {
+                    console.error('❌ Erro na atualização:', resultado);
+                    mostrarAlerta('erro', 'Erro ao atualizar mídia: ' + (resultado.error || 'Erro desconhecido'));
+                }
+
+            } catch (err) {
+                console.error('❌ Erro na requisição:', err);
+                mostrarAlerta('erro', 'Erro de conexão: ' + err.message);
+            }
+        }
+
+        // Variáveis globais para armazenar informações da mídia a ser excluída
+        let midiaParaExcluirId = null;
+        let midiaParaExcluirNome = null;
+
+        async function excluirMidia(id, nome) {
+            midiaParaExcluirId = id; // Armazena o ID da mídia
+            midiaParaExcluirNome = nome; // Armazena o nome da mídia
+
+            // Atualiza o texto do modal para incluir o nome da mídia
+            const mensagem = `Tem certeza de que deseja excluir <strong>"${nome}"</strong>? Esta ação não pode ser desfeita.`;
+            document.getElementById('confirmarExclusaoMensagem').innerHTML = mensagem;
+
+            // Abre o modal de confirmação
+            const modal = new bootstrap.Modal(document.getElementById('modalConfirmarExclusao'));
+            modal.show();
+        }
+        // Event Listeners
+        document.getElementById('addMidiaBtn').addEventListener('click', function () {
+            const modal = new bootstrap.Modal(document.getElementById('addMidiaModal'));
+            modal.show();
+        });
+
+        document.getElementById('salvarMidiaBtn').addEventListener('click', function () {
+            const activeTab = document.querySelector('#midiaTab .nav-link.active').id;
+
+            if (activeTab === 'upload-tab') {
+                adicionarMidiaUpload();
+            } else {
+                adicionarMidiaUrl();
+            }
+        });
+
+        document.getElementById('salvarEdicaoBtn').addEventListener('click', function () {
+            salvarEdicaoMidia();
+        });
+
+        // Preview para upload de arquivo
+        document.getElementById('fileInput').addEventListener('change', async function () {
+            const file = this.files[0]; // Obtém o arquivo selecionado
+            const previewContainer = document.getElementById('uploadPreviewContainer');
+            const preview = document.getElementById('uploadPreview');
+            const durationInput = document.getElementById('duration'); // Campo de duração
+
+            if (file) {
+                // Verificar tamanho do arquivo (100MB)
+                if (file.size > 100 * 1024 * 1024) {
+                    mostrarAlerta('erro', 'Arquivo muito grande. Tamanho máximo: 100MB');
+                    this.value = ''; // Limpa o input
+                    previewContainer.style.display = 'none'; // Oculta o preview
+                    return;
+                }
+
+                // Criar preview do arquivo
+                preview.innerHTML = criarPreviewArquivo(file);
+                previewContainer.style.display = 'block';
+
+                // Preencher título automaticamente, se vazio
+                const titleInput = document.getElementById('uploadTitle');
+                if (!titleInput.value.trim()) {
+                    titleInput.value = file.name.replace(/\.[^/.]+$/, ""); // Remove a extensão do arquivo
+                }
+
+                // Calcular duração real se for um vídeo
+                if (file.type.startsWith('video/')) {
+                    await capturarDuracaoVideo(file, (duration) => {
+                        console.log(`🎥 Duração real do vídeo: ${duration} segundos`);
+                        durationInput.value = Math.round(duration); // Preencher o campo de duração com o valor calculado
+                    });
+                } else {
+                    // Para imagens, áudios ou outros arquivos, define o padrão de 10s se o campo estiver vazio
+                    if (!durationInput.value.trim()) {
+                        durationInput.value = 10;
+                    }
+                }
+            } else {
+                previewContainer.style.display = 'none';
+                durationInput.value = ''; // Reseta o campo duração
+            }
+        });
+
+        async function capturarDuracaoVideo(file, callback) {
+            const video = document.createElement('video'); // Cria um elemento de vídeo
+            const objectUrl = URL.createObjectURL(file); // Cria uma URL temporária para o arquivo
+
+            return new Promise((resolve, reject) => {
+                video.preload = 'metadata'; // Carrega apenas os metadados
+                video.src = objectUrl; // Define a URL no elemento de vídeo
+
+                video.onloadedmetadata = () => {
+                    URL.revokeObjectURL(video.src); // Libera a URL temporária
+                    const duration = video.duration; // Obtém a duração do vídeo
+                    callback(duration); // Passa o valor para o callback
+                    resolve(duration); // Resolve a Promise
+                };
+
+                video.onerror = (error) => {
+                    console.error('Erro ao carregar o vídeo:', error);
+                    reject(error); // Rejeita a Promise em caso de erro
+                };
+            });
+        }
+        // Preview para URL
+        document.getElementById('midiaUrl').addEventListener('input', async function () {
+            const url = this.value.trim(); // Obtém o valor da URL
+            const type = document.getElementById('midiaType').value; // Obtém o tipo selecionado
+            const durationInput = document.getElementById('urlDuration'); // Campo de duração
+            const previewContainer = document.getElementById('urlPreviewContainer');
+
+            if (url && type) {
+                // Atualiza o preview da mídia fornecida
+                previewContainer.innerHTML = criarPreview(url, type);
+
+                // Detecta a duração se for um vídeo ou áudio
+                if (type === 'video' || type === 'audio') {
+                    try {
+                        const duracao = await capturarDuracaoDeUrl(url, (duration) => {
+                            durationInput.value = Math.round(duration); // Preenche a duração no campo
+                        });
+                    } catch (err) {
+                        console.error('Erro ao calcular duração:', err);
+                        durationInput.value = ''; // Reseta o campo em caso de erro
+                    }
+                }
+            } else {
+                // Preenche com texto padrão se a URL ou tipo estiver vazio
+                previewContainer.innerHTML = '<p class="text-muted mb-0">Digite uma URL para gerar o preview.</p>';
+                durationInput.value = ''; // Reseta o campo
+            }
+        });
+
+        document.getElementById('midiaType').addEventListener('change', function () {
+            const url = document.getElementById('midiaUrl').value.trim();
+            const type = this.value;
+            const previewContainer = document.getElementById('urlPreviewContainer');
+
+            if (url && type) {
+                previewContainer.innerHTML = criarPreview(url, type);
+            } else {
+                previewContainer.innerHTML = '<p class="text-muted mb-0">Digite uma URL para ver o preview</p>';
+            }
+        });
+
+        // Preview para edição
+        document.getElementById('editUrl').addEventListener('input', function () {
+            const url = this.value.trim();
+            const type = document.getElementById('editType').value;
+            const previewContainer = document.getElementById('editPreviewContainer');
+
+            if (url && type) {
+                previewContainer.innerHTML = criarPreview(url, type);
+            }
+        });
+
+        document.getElementById('editType').addEventListener('change', function () {
+            const url = document.getElementById('editUrl').value.trim();
+            const type = this.value;
+            const previewContainer = document.getElementById('editPreviewContainer');
+
+            if (url && type) {
+                previewContainer.innerHTML = criarPreview(url, type);
+            }
+        });
+
+        document.getElementById('btnConfirmarExclusao').addEventListener('click', async () => {
+            if (!midiaParaExcluirId) return; // Se não tiver uma mídia armazenada, retorna
+
+            try {
+                console.log('Excluindo mídia:', midiaParaExcluirId);
+
+                const resposta = await fetch(`${buildApiUrl('/private/midia')}/${midiaParaExcluirId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    }
+                });
+
+                const resultado = await resposta.json();
+
+                if (resposta.ok) {
+                    console.log('✅ Mídia excluída com sucesso:', resultado);
+                    mostrarAlerta('sucesso', `Mídia "${midiaParaExcluirNome}" excluída com sucesso!`);
+
+                    // Remover elemento da tela imediatamente
+                    const elemento = document.getElementById(`midia-${midiaParaExcluirId}`);
+                    if (elemento) {
+                        elemento.remove();
+                    }
+
+                    // Recarregar mídias para garantir sincronização
+                    setTimeout(() => {
+                        carregarMidias();
+                    }, 500);
+                } else {
+                    console.error('❌ Erro na exclusão da mídia:', resultado);
+                    mostrarAlerta('erro', `Erro ao excluir ${midiaParaExcluirNome}: ${resultado.error || 'Erro desconhecido'}`);
+                }
+            } catch (err) {
+                console.error('❌ Erro na requisição de exclusão:', err);
+                mostrarAlerta('erro', `Erro ao excluir ${midiaParaExcluirNome}: ${err.message}`);
+            }
+
+            // Fecha o modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalConfirmarExclusao'));
+            modal.hide();
+
+            // Limpa variáveis globais
+            midiaParaExcluirId = null;
+            midiaParaExcluirNome = null;
+        });
+
+        // Limpar formulários ao trocar de aba
+        document.getElementById('upload-tab').addEventListener('click', function () {
+            document.getElementById('urlMidiaForm').reset();
+            document.getElementById('urlPreviewContainer').innerHTML = '<p class="text-muted mb-0">Digite uma URL para ver o preview</p>';
+        });
+
+        document.getElementById('url-tab').addEventListener('click', function () {
+            document.getElementById('uploadMidiaForm').reset();
+            document.getElementById('uploadPreviewContainer').style.display = 'none';
+            document.getElementById('uploadProgress').style.display = 'none';
+        });
+
+        // Carregar mídias ao inicializar a página
+        carregarMidias();
+
+
+        // Abre o modal para exibir a imagem em tamanho real
+        function abrirModalVisualizarFoto(url, title) {
+            // Define a imagem e o título no modal
+            const modalTitulo = document.getElementById("modalVisualizarFotoTitulo");
+            const modalImagem = document.getElementById("imagemEmTamanhoReal");
+
+            modalTitulo.textContent = title || "Visualizar Imagem"; // Exibe o título
+            modalImagem.src = url; // Define a URL da imagem no modal
+
+            // Mostra o modal
+            const modal = new bootstrap.Modal(document.getElementById("modalVisualizarFoto"));
+            modal.show();
+        }
+
+        async function capturarDuracaoDeUrl(videoUrl, callback) {
+            const video = document.createElement('video'); // Cria um elemento de vídeo para carregar a URL
+            video.preload = 'metadata'; // Carrega apenas os metadados do vídeo
+            video.src = videoUrl; // Define a URL no elemento de vídeo
+
+            return new Promise((resolve, reject) => {
+                video.onloadedmetadata = () => {
+                    const duration = video.duration; // Obtém a duração do vídeo
+                    console.log(`🎥 Duração da URL detectada: ${duration} segundos`);
+                    callback(duration); // Passa a duração detectada para a função de callback
+                    resolve(duration); // Retorna a duração como valor resolvido da Promise
+                };
+
+                video.onerror = (error) => {
+                    console.error('Erro ao carregar o vídeo pela URL:', error);
+                    reject(error); // Rejeita a Promise em caso de erro
+                };
+            });
+        }
+
+    </script>
+    
+    <!-- Modal de Configuração -->
+    <div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="configModalLabel">
+                        <i class="bi bi-gear me-2"></i>Configurações
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Informações do usuário -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-person-circle me-2"></i>Usuário Logado
+                        </h6>
+                        <div class="d-flex align-items-center p-3 bg-light rounded">
+                            <div class="me-3">
+                                <i class="bi bi-person-circle text-primary" style="font-size: 2rem;"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold" id="userNameModal">Usuário</div>
+                                <div class="text-muted small" id="userEmailModal">usuario@email.com</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configurações de tema -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-palette me-2"></i>Aparência
+                        </h6>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="themeToggleModal">
+                            <label class="form-check-label" for="themeToggleModal">
+                                <i class="bi bi-moon me-2"></i>Modo Escuro
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Fechar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="logoutBtnModal">
+                        <i class="bi bi-box-arrow-right me-1"></i>Sair
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts de configuração -->
+    <script>
+        // Gerenciamento de tema
+        const themeToggleModal = document.getElementById('themeToggleModal');
+        const body = document.body;
+        
+        // Carregar tema salvo
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-theme');
+            if (themeToggleModal) themeToggleModal.checked = true;
+        }
+        
+        // Função para alternar tema
+        function toggleTheme() {
+            body.classList.toggle('dark-theme');
+            const isDark = body.classList.contains('dark-theme');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            
+            // Sincronizar toggle
+            if (themeToggleModal) themeToggleModal.checked = isDark;
+        }
+        
+        // Event listener para o toggle
+        if (themeToggleModal) {
+            themeToggleModal.addEventListener('change', toggleTheme);
+        }
+        
+        // Logout
+        const logoutBtnModal = document.getElementById('logoutBtnModal');
+        
+        function handleLogout() {
+            if (confirm('Tem certeza que deseja sair?')) {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userData');
+                window.location.href = '../index.html';
+            }
+        }
+        
+        if (logoutBtnModal) {
+            logoutBtnModal.addEventListener('click', handleLogout);
+        }
+    </script>
+</body>
+
+</html>
