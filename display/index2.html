@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VIX MIDIA - Display</title>
+  <link rel="stylesheet" href="cssDisplay.css" />
+  <script src="config.js"></script>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style>
+    /* Estilos para a div inferior fixa */
+    #bottomBar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100px; /* Aumentado para acomodar texto maior */
+      background-color: #000;
+      display: none; /* Inicialmente oculta */
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px; /* Aumentado o padding */
+      z-index: 1000;
+      border-top: 2px solid #333;
+    }
+    
+    #bottomBar.show {
+      display: flex;
+    }
+    
+    .bottom-logo {
+      height: 70px; /* Aumentado */
+      width: auto;
+    }
+    
+    .contact-info {
+      color: #fff;
+      font-family: 'Poppins', Arial, sans-serif;
+      font-size: 35px; /* Aumentado de 18px para 24px */
+      font-weight: 600; /* Mais bold */
+      text-align: right;
+    }
+    
+    .contact-text {
+      margin: 0;
+      line-height: 1.2;
+      color: #f4fcf4; /* Verde para todo o texto */
+      white-space: nowrap; /* Evita quebra de linha */
+    }
+
+    
+    /* Ajuste no container principal para acomodar a barra inferior */
+    #mainContainer.with-bottom-bar {
+      padding-bottom: 80px;
+    }
+    
+    #videoContainer.with-bottom-bar {
+      height: calc(100vh - 80px);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="mainContainer">
+    <div id="videoContainer" style="display: none;">
+      <video id="videoPlayer" autoplay muted></video>
+    </div>
+
+    <!-- Tela de sistema offline -->
+    <div id="offlineDisplay" style="display: none;">
+      <div class="offline-container">
+        <div class="logo-section">
+          <img src="../public/img/logo.png" alt="Logo Vix Mídia" class="logo-image" />
+        </div>
+        <div class="offline-message">
+          <h1>Sistema off-line</h1>
+          <p>Daqui a pouco voltamos!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tela de cadastro com layout melhorado -->
+    <div id="keyDisplay" style="display: none;">
+      <div class="registration-container">
+        <div class="logo-section">
+          <img id="logoImg" src="../public/img/logo.png" alt="Logo Vix Mídia" class="logo-image" />
+        </div>
+        
+        <div class="content-section">
+          <div class="status-card">
+            <h2 class="status-title">Terminal não cadastrado</h2>
+            <p id="instruction" class="instruction-text">Para ativar este terminal, utilize a chave abaixo no Portal de Administração</p>
+            
+            <div class="key-section">
+              <p class="key-label">Chave do Terminal:</p>
+              <div id="generatedKey" class="key-container"></div>
+            </div>
+            
+            <div class="help-section">
+              <p class="help-text">Precisa de ajuda?</p>
+              <p class="contact-info">📧 vixmidia@altersoft.net.br</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Painel para Mega-Sena em tela cheia -->
+    <div id="megaSenaPanel"
+      style="display: none; background-color: #FF8C00; color: white; text-align: center; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box;">
+      <img src="https://logodownload.org/wp-content/uploads/2018/10/mega-sena-logo.png" alt="Logo Mega-Sena"
+        style="width: 500px; margin-bottom: 30px;" />
+      <div style="margin-bottom: 20px;">
+        <p id="megaSenaDate" style="font-size: 2.5em; margin: 20px 0;"></p>
+        <div id="megaSenaNumbers"
+          style="display: flex; justify-content: center; gap: 25px; margin-top: 30px; margin-bottom: 10px;"></div>
+      </div>
+      <div id="megaSenaResult" style="font-size: 2.5em; margin-top: 10px;"></div>
+    </div>
+    
+    <!-- Barra inferior fixa com logo e informações de contato -->
+    <div id="bottomBar">
+     
+        <img id="bottomLogo" src="${APP_CONFIG.CLIENT_LOGO}" alt="Logo" class="bottom-logo" />
+
+      <div class="contact-info">
+        <p class="contact-text">ANUNCIE AQUI! <i class="bi bi-telephone-fill"> </i>(85) 99445.4472</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Carrega o arquivo JavaScript externo -->
+  <script src="display2.js"></script>
+</body>
+
+</html>

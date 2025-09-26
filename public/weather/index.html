@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clima Atual - Previsão do Tempo</title>
+    <link rel="stylesheet" href="weather.css">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+    <div class="weather-container">
+        <div class="weather-card">
+            <!-- Header com horário -->
+            <div class="weather-header">
+                <div class="time-display" id="currentTime">07:38</div>
+            </div>
+
+            <!-- Título -->
+            <div class="weather-title">
+                <h1>Clima atual</h1>
+                <p class="city-name" id="cityName">Itaguaí</p>
+            </div>
+
+            <!-- Card principal com informações do clima -->
+            <div class="weather-main-card">
+                <!-- Ícone -->
+                <div class="weather-icon">
+                    <i id="weather-icon" data-feather="sun"></i>
+                </div>
+                
+                <!-- Temperatura principal -->
+                <div class="main-weather">
+                    <div class="temperature">
+                        <span class="temp-value" id="temperature">19</span>
+                        <span class="temp-unit">°C</span>
+                    </div>
+                </div>
+
+                <!-- Condição climática -->
+                <div class="weather-condition">
+                    <p id="weatherDescription">Nuvens Dispersas</p>
+                </div>
+
+                <!-- Sensação térmica -->
+                <div class="feels-like">
+                    <p>SENSAÇÃO TÉRMICA <span id="feelsLike">19°C</span></p>
+                </div>
+            </div>
+
+            <!-- Informações adicionais -->
+            <div class="weather-details">
+                <div class="detail-item">
+                    <span class="detail-label">*ÚLTIMA ATUALIZAÇÃO DOS DADOS:</span>
+                    <span class="detail-value" id="lastUpdate">11/08/2025 ÀS 10:46</span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="detail-label">VENTO:</span>
+                    <span class="detail-value" id="windSpeed">11,12km/h</span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="detail-label">UMIDADE:</span>
+                    <span class="detail-value" id="humidity">68%</span>
+                </div>
+                
+                <div class="detail-item">
+                    <span class="detail-label">QUALIDADE DO AR:</span>
+                    <span class="detail-value" id="airQuality">Boa</span>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+    <script src="weather.js"></script>
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>

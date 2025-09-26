@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Video Player Mobile</title>
+    <!-- CSS BOOTSTRAP -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="v6.css">
+    <script src="configDisplay.js"></script>
+    </head>
+
+<body>
+    <div id="showKey">
+        mostra chave de acesso
+        <br>
+        chave abc123
+    </div>
+
+    <div id="showPlay">
+        <div id="showPlaySuperior">
+           <!-- Player principal -->
+           <video id="mainVideo" autoplay muted playsinline webkit-playsinline preload="auto" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;">
+            Seu navegador não suporta o elemento de vídeo.
+           </video>
+           <!-- Player buffer oculto para próxima mídia -->
+           <video id="bufferVideo" muted playsinline webkit-playsinline preload="auto" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; pointer-events: none;">
+           </video>
+        </div>
+        <div id="showPlayInferior">
+            <div class="coluna-esquerda padding: 20px margin: 20px" >
+                <img id="logoDispositivo" src="" alt="Logo" style="display: none; max-height: 60px; max-width: 150px; object-fit: contain;">
+            </div>
+            <div class="coluna-direita">
+                <span class="textoInferior">
+                    ANUNCIE AQUI! (85) 99445.4472
+                </span>
+            </div>
+        </div>
+        
+        <!-- Indicador de preload -->
+        <div id="preloadIndicator" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <!-- Logo da empresa -->
+            <div class="loading-logo">
+                <img src="../public/img/logo.png" alt="Logo Vix Mídia" style="max-width: 360px; max-height: 216px; object-fit: contain;" >
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <div id="preloadText" style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">Carregando mídias...</div>
+                <div id="preloadCounter" style="font-size: 18px; opacity: 0.8;">0 / 0</div>
+                <div style="width: 300px; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; margin: 15px auto; overflow: hidden;">
+                    <div id="preloadProgress" style="width: 0%; height: 100%; background: linear-gradient(90deg, #00D4AA, #00A8CC); border-radius: 4px; transition: width 0.3s ease;"></div>
+                </div>
+                <div style="font-size: 14px; opacity: 0.7; margin-top: 10px;">Preparando playlist...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="configDisplay.js"></script>
+    <script>
+        // Compatibilidade com Android e verificação de chave
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.querySelector('video');
+            const showKey = document.getElementById('showKey');
+            const showPlay = document.getElementById('showPlay');
+            
+            // Registra o Service Worker para cache offline
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado com sucesso:', registration);
+                        
+                        // Escuta atualizações do Service Worker
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('Nova versão do Service Worker disponível');
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Erro ao registrar Service Worker:', error);
+                    });
+            }
+            
+            // Adiciona listener para combinação de teclas Ctrl+Shift+C para limpar cache
+            document.addEventListener('keydown', function(event) {
+                if (event.ctrlKey && event.shiftKey && event.key === 'C') {
+                    event.preventDefault();
+                    
+                    if (confirm('Deseja limpar todo o cache offline?\n\nIsso removerá todas as mídias e dados salvos localmente.')) {
+                        const removedItems = limparTodoCache();
+                        
+                        // Limpa também o Service Worker cache se disponível
+                        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                            const messageChannel = new MessageChannel();
+                            messageChannel.port1.onmessage = function(event) {
+                                if (event.data.success) {
+                                    console.log('Service Worker cache limpo com sucesso');
+                                } else {
+                                    console.error('Erro ao limpar Service Worker cache');
+                                }
+                            };
+                            
+                            navigator.serviceWorker.controller.postMessage({
+                                type: 'CLEAR_CACHE'
+                            }, [messageChannel.port2]);
+                        }
+                        
+                        alert(`Cache limpo com sucesso!\n\n${removedItems} itens removidos do localStorage.\nService Worker cache também foi limpo.`);
+                        
+                        // Recarrega a página para aplicar as mudanças
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    }
+                }
+            });
+            
+            // Monitora status da conexão
+            let isOnline = navigator.onLine;
+            
+            window.addEventListener('online', () => {
+                isOnline = true;
+                console.log('Conexão restaurada');
+                
+                // Remove indicador offline
+                const offlineIndicator = document.getElementById('offlineIndicator');
+                if (offlineIndicator) {
+                    offlineIndicator.style.background = 'rgba(0, 200, 0, 0.9)';
+                    offlineIndicator.innerHTML = '📡 ONLINE';
+                    setTimeout(() => offlineIndicator.remove(), 3000);
+                }
+            });
+            
+            window.addEventListener('offline', () => {
+                isOnline = false;
+                console.log('Conexão perdida - modo offline');
+                adicionarIndicadorOffline();
+            });
+            
+            // Função para gerar chave única baseada no navegador
+            function gerarChaveUnica() {
+                // Tenta obter uma chave já existente no localStorage
+                let chaveExistente = localStorage.getItem('deviceKey');
+                if (chaveExistente) {
+                    return chaveExistente;
+                }
+                
+                // Se não existe, gera uma nova baseada em características do navegador
+                const navegadorInfo = [
+                    navigator.userAgent,
+                    navigator.language,
+                    screen.width + 'x' + screen.height,
+                    new Date().getTimezoneOffset(),
+                    navigator.platform
+                ].join('|');
+                
+                // Gera hash simples da string
+                let hash = 0;
+                for (let i = 0; i < navegadorInfo.length; i++) {
+                    const char = navegadorInfo.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Converte para 32bit
+                }
+                
+                // Converte hash para chave de 6 caracteres
+                const caracteres = 'ABCDEF0123456789';
+                let chave = '';
+                let hashAbs = Math.abs(hash);
+                
+                for (let i = 0; i < 6; i++) {
+                    chave += caracteres.charAt(hashAbs % caracteres.length);
+                    hashAbs = Math.floor(hashAbs / caracteres.length);
+                }
+                
+                // Se a chave ficou muito curta, completa com caracteres aleatórios
+                while (chave.length < 6) {
+                    chave += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+                }
+                
+                return chave;
+            }
+            
+            // Função para verificar chave na API com fallback offline
+            async function verificarChave(deviceKey) {
+                try {
+                    const response = await fetch(`http://192.168.0.120:4000/public/device/${deviceKey}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('Dispositivo encontrado:', data);
+                        
+                        // Salva os dados no cache para uso offline
+                        await salvarDadosCache(deviceKey, data);
+                        
+                        return data; // Retorna os dados completos incluindo medias
+                    } else {
+                        console.log('Dispositivo não encontrado, tentando cache offline...');
+                        return await carregarDadosCache(deviceKey);
+                    }
+                } catch (error) {
+                    console.error('Erro ao verificar chave, usando cache offline:', error);
+                    return await carregarDadosCache(deviceKey);
+                }
+            }
+            
+            // Função para salvar dados no cache offline
+            async function salvarDadosCache(deviceKey, data) {
+                try {
+                    // Salva os dados do dispositivo
+                    localStorage.setItem(`device_${deviceKey}`, JSON.stringify(data));
+                    localStorage.setItem(`device_${deviceKey}_timestamp`, Date.now().toString());
+                    
+                    // Salva as URLs das mídias para cache
+                    if (data.panel && data.panel.medias) {
+                        const mediaUrls = data.panel.medias.map(media => media.url);
+                        localStorage.setItem(`device_${deviceKey}_media_urls`, JSON.stringify(mediaUrls));
+                        
+                        // Inicia o cache das mídias em background
+                        cachearMidiasOffline(data.panel.medias, deviceKey);
+                    }
+                    
+                    console.log('Dados salvos no cache offline');
+                } catch (error) {
+                    console.error('Erro ao salvar dados no cache:', error);
+                }
+            }
+            
+            // Função para carregar dados do cache offline
+            async function carregarDadosCache(deviceKey) {
+                try {
+                    const cachedData = localStorage.getItem(`device_${deviceKey}`);
+                    if (cachedData) {
+                        const data = JSON.parse(cachedData);
+                        const timestamp = localStorage.getItem(`device_${deviceKey}_timestamp`);
+                        
+                        console.log('Dados carregados do cache offline (timestamp:', new Date(parseInt(timestamp)), ')');
+                        
+                        // Carrega as mídias do cache offline
+                        data.panel.medias = await carregarMidiasCacheadas(deviceKey);
+                        
+                        return data;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Erro ao carregar dados do cache:', error);
+                    return false;
+                }
+            }
+            
+            // Função para cachear mídias offline usando IndexedDB
+            async function cachearMidiasOffline(medias, deviceKey) {
+                try {
+                    console.log('Iniciando cache offline de', medias.length, 'mídias...');
+                    
+                    for (let i = 0; i < medias.length; i++) {
+                        const media = medias[i];
+                        const cacheKey = `media_${deviceKey}_${i}`;
+                        
+                        // Verifica se a mídia já está em cache
+                        const cachedMedia = localStorage.getItem(cacheKey);
+                        if (cachedMedia) {
+                            console.log(`Mídia ${i + 1} já está em cache`);
+                            continue;
+                        }
+                        
+                        try {
+                            // Baixa a mídia
+                            const response = await fetch(media.url);
+                            if (response.ok) {
+                                const blob = await response.blob();
+                                const reader = new FileReader();
+                                
+                                reader.onload = function() {
+                                    try {
+                                        // Salva como base64 no localStorage (limitado, mas funcional)
+                                        localStorage.setItem(cacheKey, reader.result);
+                                        localStorage.setItem(`${cacheKey}_type`, blob.type);
+                                        console.log(`Mídia ${i + 1} cacheada com sucesso`);
+                                    } catch (storageError) {
+                                        console.warn(`Erro ao salvar mídia ${i + 1} no cache (provavelmente muito grande):`, storageError);
+                                        // Para vídeos muito grandes, salva apenas a URL
+                                        localStorage.setItem(`${cacheKey}_url`, media.url);
+                                    }
+                                };
+                                
+                                reader.readAsDataURL(blob);
+                            }
+                        } catch (mediaError) {
+                            console.warn(`Erro ao cachear mídia ${i + 1}:`, mediaError);
+                            // Salva apenas a URL como fallback
+                            localStorage.setItem(`${cacheKey}_url`, media.url);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erro no processo de cache offline:', error);
+                }
+            }
+            
+            // Função para carregar mídias do cache offline
+            async function carregarMidiasCacheadas(deviceKey) {
+                try {
+                    const mediaUrls = JSON.parse(localStorage.getItem(`device_${deviceKey}_media_urls`) || '[]');
+                    const mediasCache = [];
+                    
+                    for (let i = 0; i < mediaUrls.length; i++) {
+                        const cacheKey = `media_${deviceKey}_${i}`;
+                        const cachedData = localStorage.getItem(cacheKey);
+                        const cachedUrl = localStorage.getItem(`${cacheKey}_url`);
+                        
+                        if (cachedData) {
+                            // Mídia está cacheada como base64
+                            mediasCache.push({
+                                url: cachedData,
+                                cached: true,
+                                originalUrl: mediaUrls[i]
+                            });
+                        } else if (cachedUrl) {
+                            // Apenas URL está cacheada
+                            mediasCache.push({
+                                url: cachedUrl,
+                                cached: false,
+                                originalUrl: mediaUrls[i]
+                            });
+                        } else {
+                            // Fallback para URL original
+                            mediasCache.push({
+                                url: mediaUrls[i],
+                                cached: false,
+                                originalUrl: mediaUrls[i]
+                            });
+                        }
+                    }
+                    
+                    console.log(`Carregadas ${mediasCache.length} mídias do cache offline`);
+                    return mediasCache;
+                } catch (error) {
+                    console.error('Erro ao carregar mídias do cache:', error);
+                    return [];
+                }
+            }
+            
+            // Função para configurar layout baseado no showClienteInfo
+            function configurarLayout(showClienteInfo, dadosDispositivo = null) {
+                const showPlaySuperior = document.getElementById('showPlaySuperior');
+                const showPlayInferior = document.getElementById('showPlayInferior');
+                const logoDispositivo = document.getElementById('logoDispositivo');
+                
+                if (showClienteInfo === true) {
+                    // Se showClienteInfo é TRUE, mostra a div inferior ("ANUNCIE AQUI")
+                    showPlayInferior.style.display = 'flex';
+                    showPlaySuperior.style.height = '90%'; // Mantém altura padrão do CSS
+                    
+                    // Configura a logo do dispositivo se disponível
+                    if (dadosDispositivo && dadosDispositivo.user && dadosDispositivo.user.picture) {
+                        logoDispositivo.src = dadosDispositivo.user.picture;
+                        logoDispositivo.style.display = 'block';
+                        console.log('Logo do dispositivo carregada:', dadosDispositivo.user.picture);
+                    } else {
+                        // Se não há logo, esconde a imagem
+                        logoDispositivo.style.display = 'none';
+                        console.log('Nenhuma logo encontrada para o dispositivo');
+                    }
+                } else {
+                    // Se showClienteInfo é FALSE, esconde a div inferior e a superior ocupa toda a tela
+                    showPlayInferior.style.display = 'none';
+                    showPlaySuperior.style.height = '100%';
+                }
+            }
+            
+            // Função para mostrar a div apropriada
+            async function inicializarDisplay() {
+                // Gera ou obtém a chave única do navegador
+                let deviceKey = gerarChaveUnica();
+                
+                // Salva a chave no localStorage para persistência
+                localStorage.setItem('deviceKey', deviceKey);
+                
+                // Verifica se a chave é válida na API
+                const chaveValida = await verificarChave(deviceKey);
+                
+                if (chaveValida) {
+                    // Chave válida - mostra o player
+                    showKey.style.display = 'none';
+                    showPlay.style.display = 'block';
+                    
+                    // Configura o layout baseado no showClienteInfo do dispositivo
+                    configurarLayout(chaveValida.device.showClienteInfo, chaveValida);
+                    
+                    // Adiciona indicador de modo offline se necessário
+                    adicionarIndicadorOffline();
+                    
+                    inicializarVideo(chaveValida.panel.medias);
+                } else {
+                    // Tenta carregar dados do cache offline
+                    console.log('API indisponível, tentando carregar dados do cache...');
+                    const dadosCache = await carregarDadosCache(deviceKey);
+                    
+                    if (dadosCache && dadosCache.panel && dadosCache.panel.medias && dadosCache.panel.medias.length > 0) {
+                        // Dados encontrados no cache - mostra o player em modo offline
+                        console.log('Dados encontrados no cache, iniciando em modo offline');
+                        showKey.style.display = 'none';
+                        showPlay.style.display = 'block';
+                        
+                        // Configura o layout baseado no showClienteInfo do dispositivo
+                        configurarLayout(dadosCache.device.showClienteInfo, dadosCache);
+                        
+                        // Adiciona indicador de modo offline
+                        adicionarIndicadorOffline();
+                        
+                        // Inicia reprodução com dados do cache
+                        inicializarVideo(dadosCache.panel.medias);
+                    } else {
+                        // Sem dados no cache - mostra a tela de chave
+                        console.log('Nenhum dado encontrado no cache');
+                        showPlay.style.display = 'none';
+                        showKey.style.display = 'block';
+                        showKey.innerHTML = `
+                            <div style="text-align: center;">
+                                <h3>Chave de Acesso</h3>
+                                <p><strong>${deviceKey}</strong></p>
+                                <p>Registre esta chave no painel administrativo</p>
+                                <button onclick="location.reload()" style="margin-top: 10px; padding: 10px 20px;">Verificar Novamente</button>
+                                <div style="margin-top: 20px; padding: 10px; background: #ffebee; border-radius: 5px; font-size: 12px; color: #c62828;">
+                                    <strong>Modo Offline:</strong> Sem conexão com a API<br>
+                                    Nenhum dado encontrado no cache local<br>
+                                    Conecte-se à internet para registrar o dispositivo
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+            
+            // Função para adicionar indicador visual de modo offline
+            function adicionarIndicadorOffline() {
+                // Remove indicador existente
+                const existingIndicator = document.getElementById('offlineIndicator');
+                if (existingIndicator) {
+                    existingIndicator.remove();
+                }
+                
+                // Verifica se está usando dados do cache
+                const deviceKey = localStorage.getItem('deviceKey');
+                const timestamp = localStorage.getItem(`device_${deviceKey}_timestamp`);
+                
+                const offlineIndicator = document.createElement('div');
+                offlineIndicator.id = 'offlineIndicator';
+                offlineIndicator.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    background: rgba(255, 165, 0, 0.9);
+                    color: white;
+                    padding: 8px 12px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    z-index: 1000;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                `;
+                
+                if (timestamp) {
+                    const cacheDate = new Date(parseInt(timestamp));
+                    const now = new Date();
+                    const diffHours = Math.floor((now - cacheDate) / (1000 * 60 * 60));
+                    const diffMinutes = Math.floor((now - cacheDate) / (1000 * 60));
+                    
+                    let timeText;
+                    if (diffHours > 0) {
+                        timeText = `${diffHours}h`;
+                    } else {
+                        timeText = `${diffMinutes}m`;
+                    }
+                    
+                    offlineIndicator.innerHTML = `📡 OFFLINE (${timeText})`;
+                } else {
+                    offlineIndicator.innerHTML = '📡 OFFLINE';
+                }
+                
+                // Adiciona evento de clique para mostrar detalhes do cache
+                offlineIndicator.addEventListener('click', mostrarDetalhesCache);
+                
+                document.body.appendChild(offlineIndicator);
+                
+                // Remove o indicador após 15 segundos se não for clicado
+                setTimeout(() => {
+                    if (document.getElementById('offlineIndicator')) {
+                        document.getElementById('offlineIndicator').remove();
+                    }
+                }, 15000);
+            }
+            
+            // Função para mostrar detalhes do cache
+            async function mostrarDetalhesCache() {
+                const deviceKey = localStorage.getItem('deviceKey');
+                const timestamp = localStorage.getItem(`device_${deviceKey}_timestamp`);
+                const mediaUrls = JSON.parse(localStorage.getItem(`device_${deviceKey}_media_urls`) || '[]');
+                
+                let cacheInfo = 'INFORMAÇÕES DO CACHE\n\n';
+                
+                if (timestamp) {
+                    const cacheDate = new Date(parseInt(timestamp));
+                    cacheInfo += `Última atualização: ${cacheDate.toLocaleString()}\n`;
+                }
+                
+                cacheInfo += `Mídias em cache: ${mediaUrls.length}\n`;
+                
+                // Verifica quantas mídias estão realmente cacheadas
+                let cachedCount = 0;
+                for (let i = 0; i < mediaUrls.length; i++) {
+                    const cacheKey = `media_${deviceKey}_${i}`;
+                    if (localStorage.getItem(cacheKey) || localStorage.getItem(`${cacheKey}_url`)) {
+                        cachedCount++;
+                    }
+                }
+                
+                cacheInfo += `Mídias disponíveis offline: ${cachedCount}\n`;
+                
+                // Calcula tamanho aproximado do cache
+                let cacheSize = 0;
+                for (let key in localStorage) {
+                    if (key.startsWith(`device_${deviceKey}`) || key.startsWith(`media_${deviceKey}`)) {
+                        cacheSize += localStorage[key].length;
+                    }
+                }
+                
+                const cacheSizeMB = (cacheSize / (1024 * 1024)).toFixed(2);
+                cacheInfo += `Tamanho do cache: ~${cacheSizeMB} MB\n`;
+                
+                // Verifica Service Worker
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                    cacheInfo += '\nService Worker: Ativo ✓';
+                } else {
+                    cacheInfo += '\nService Worker: Inativo ✗';
+                }
+                
+                cacheInfo += '\n\n[Pressione Ctrl+Shift+C para limpar cache]';
+                
+                alert(cacheInfo);
+            }
+            
+            // Variáveis da playlist
+            let playlist = [];
+            let currentMediaIndex = 0;
+            
+            // Array para armazenar mídias precarregadas
+            let preloadedMedias = [];
+            let isPreloading = false;
+            
+            // Função para precarregar todas as mídias com suporte a cache
+            async function preloadMedias(medias) {
+                console.log('Iniciando preload de', medias.length, 'mídias...');
+                isPreloading = true;
+                preloadedMedias = [];
+                
+                // Mostra o indicador de preload
+                const preloadIndicator = document.getElementById('preloadIndicator');
+                const preloadProgress = document.getElementById('preloadProgress');
+                const preloadCounter = document.getElementById('preloadCounter');
+                const preloadText = document.getElementById('preloadText');
+                
+                preloadIndicator.style.display = 'flex';
+                preloadCounter.textContent = `0 / ${medias.length}`;
+                preloadProgress.style.width = '0%';
+                preloadText.textContent = 'Carregando mídias...';
+                
+                let loadedCount = 0;
+                let cachedCount = 0;
+                
+                const preloadPromises = medias.map((midia, index) => {
+                    return new Promise((resolve, reject) => {
+                        const videoElement = document.createElement('video');
+                        videoElement.preload = 'auto';
+                        videoElement.muted = true;
+                        
+                        // Verifica se a mídia está em cache
+                        const isCached = midia.cached === true;
+                        if (isCached) {
+                            cachedCount++;
+                        }
+                        
+                        videoElement.addEventListener('loadeddata', () => {
+                            const statusText = isCached ? '(cache)' : '(online)';
+                            console.log(`Mídia ${index + 1}/${medias.length} precarregada ${statusText}:`, midia.url);
+                            preloadedMedias[index] = {
+                                element: videoElement,
+                                url: midia.url,
+                                originalData: midia,
+                                cached: isCached
+                            };
+                            
+                            // Atualiza o progresso visual
+                            loadedCount++;
+                            const progress = (loadedCount / medias.length) * 100;
+                            preloadCounter.textContent = `${loadedCount} / ${medias.length}`;
+                            preloadProgress.style.width = `${progress}%`;
+                            
+                            // Atualiza o texto baseado no progresso
+                            if (loadedCount === medias.length) {
+                                const cacheInfo = cachedCount > 0 ? ` (${cachedCount} em cache)` : '';
+                                preloadText.textContent = `Carregamento concluído!${cacheInfo}`;
+                            } else {
+                                const statusText = isCached ? ' (cache)' : '';
+                                preloadText.textContent = `Carregando mídia ${loadedCount + 1}${statusText}...`;
+                            }
+                            
+                            resolve();
+                        });
+                        
+                        videoElement.addEventListener('error', (e) => {
+                            console.error(`Erro ao precarregar mídia ${index + 1}:`, midia.url, e);
+                            loadedCount++;
+                            const progress = (loadedCount / medias.length) * 100;
+                            preloadCounter.textContent = `${loadedCount} / ${medias.length}`;
+                            preloadProgress.style.width = `${progress}%`;
+                            preloadText.textContent = `Erro na mídia ${index + 1}`;
+                            reject(e);
+                        });
+                        
+                        videoElement.src = midia.url;
+                    });
+                });
+                
+                try {
+                    await Promise.all(preloadPromises);
+                    console.log('Todas as mídias foram precarregadas com sucesso!');
+                    
+                    // Esconde o indicador após um breve delay
+                    setTimeout(() => {
+                        preloadIndicator.style.display = 'none';
+                    }, 1000);
+                    
+                    isPreloading = false;
+                    return true;
+                } catch (error) {
+                    console.error('Erro durante o preload:', error);
+                    
+                    // Esconde o indicador mesmo com erro
+                    setTimeout(() => {
+                        preloadIndicator.style.display = 'none';
+                    }, 2000);
+                    
+                    isPreloading = false;
+                    return false;
+                }
+            }
+            
+            // Função para inicializar o vídeo com playlist
+            async function inicializarVideo(medias) {
+                if (medias && medias.length > 0) {
+                    playlist = medias;
+                    currentMediaIndex = 0;
+                    
+                    console.log('Playlist carregada:', playlist);
+                    
+                    // Precarrega todas as mídias antes de iniciar
+                    const preloadSuccess = await preloadMedias(playlist);
+                    
+                    if (!preloadSuccess) {
+                        console.log('Falha no preload, iniciando reprodução normal...');
+                    }
+                    
+                    // Força o play em dispositivos móveis
+                    function playVideo() {
+                        if (video && video.paused) {
+                            video.play().catch(function(error) {
+                                console.log('Erro ao reproduzir vídeo:', error);
+                            });
+                        }
+                    }
+                    
+                    // Eventos para dispositivos móveis
+                    document.addEventListener('touchstart', playVideo, { once: true });
+                    document.addEventListener('click', playVideo, { once: true });
+                    
+                    // Configura eventos 'ended' para ambos os vídeos
+                    const mainVideo = document.getElementById('mainVideo');
+                    const bufferVideo = document.getElementById('bufferVideo');
+                    
+                    function onVideoEnded() {
+                        console.log('Vídeo terminou, fazendo transição instantânea...');
+                        proximaMidia();
+                    }
+                    
+                    mainVideo.addEventListener('ended', onVideoEnded);
+                     bufferVideo.addEventListener('ended', onVideoEnded);
+                    
+                    // Previne zoom em dispositivos móveis
+                    document.addEventListener('touchmove', function(e) {
+                        if (e.scale !== 1) {
+                            e.preventDefault();
+                        }
+                    }, { passive: false });
+                    
+                    // Mantém a tela ativa
+                    if ('wakeLock' in navigator) {
+                        navigator.wakeLock.request('screen').catch(err => {
+                            console.log('Wake Lock não suportado:', err);
+                        });
+                    }
+                    
+                    // Carrega a primeira mídia da playlist
+                    carregarMidia(currentMediaIndex);
+                } else {
+                    console.log('Nenhuma mídia encontrada');
+                    return;
+                }
+            }
+            
+            let isMainVideoActive = true; // Controla qual vídeo está ativo
+            
+            // Função para carregar uma mídia específica com duplo buffer
+            function carregarMidia(index) {
+                if (playlist && playlist[index]) {
+                    const midia = playlist[index];
+                    const mainVideo = document.getElementById('mainVideo');
+                    const bufferVideo = document.getElementById('bufferVideo');
+                    const activeVideo = isMainVideoActive ? mainVideo : bufferVideo;
+                    const nextVideo = isMainVideoActive ? bufferVideo : mainVideo;
+                    
+                    console.log(`Carregando mídia ${index + 1}/${playlist.length}:`, midia.url);
+                    
+                    // Verifica se a mídia foi precarregada
+                    if (preloadedMedias[index] && preloadedMedias[index].element) {
+                        console.log('Usando mídia precarregada:', midia.url);
+                        
+                        // Copia o conteúdo da mídia precarregada para o vídeo ativo
+                        const preloadedVideo = preloadedMedias[index].element;
+                        
+                        // Transição mais rápida - define src e reproduz imediatamente
+                        activeVideo.src = preloadedVideo.src;
+                        activeVideo.currentTime = 0;
+                        
+                        // Remove qualquer poster ou placeholder
+                        activeVideo.removeAttribute('poster');
+                        
+                        // Reprodução imediata para mídia precarregada
+                        const playPromise = activeVideo.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(function(error) {
+                                console.log('Erro ao reproduzir vídeo precarregado:', error);
+                                // Tenta com muted se falhar
+                                activeVideo.muted = true;
+                                activeVideo.play().catch(console.error);
+                            });
+                        }
+                    } else {
+                        console.log('Carregando mídia normalmente (não precarregada):', midia.url);
+                        
+                        // Remove qualquer poster ou placeholder
+                        activeVideo.removeAttribute('poster');
+                        
+                        // Determina a URL da mídia (pode ser cacheada ou original)
+                        let mediaUrl = midia.url;
+                        
+                        // Se a mídia tem dados cacheados (base64), usa eles
+                        if (midia.cached && midia.url.startsWith('data:')) {
+                            console.log('Usando mídia cacheada (base64)');
+                            mediaUrl = midia.url;
+                        } else if (midia.originalUrl) {
+                            // Usa a URL original se disponível
+                            mediaUrl = midia.originalUrl;
+                        }
+                        
+                        activeVideo.src = mediaUrl;
+                        activeVideo.load();
+                        
+                        // Reprodução com tratamento de erro melhorado
+                        const playWhenReady = function() {
+                            const playPromise = activeVideo.play();
+                            if (playPromise !== undefined) {
+                                playPromise.catch(function(error) {
+                                    console.log('Erro ao reproduzir vídeo:', error);
+                                    // Tenta com muted se falhar
+                                    activeVideo.muted = true;
+                                    activeVideo.play().catch(function(mutedError) {
+                                        console.error('Falha total ao reproduzir vídeo:', mutedError);
+                                        // Se falhar completamente, pula para próxima mídia
+                                        setTimeout(() => proximaMidia(), 1000);
+                                    });
+                                });
+                            }
+                        };
+                        
+                        // Tenta reproduzir quando estiver pronto
+                        activeVideo.addEventListener('canplay', playWhenReady, { once: true });
+                        
+                        // Fallback: se não carregar em 10 segundos, pula para próxima
+                        const timeoutId = setTimeout(() => {
+                            console.log('Timeout ao carregar mídia, pulando para próxima...');
+                            proximaMidia();
+                        }, 10000);
+                        
+                        // Cancela o timeout se o vídeo carregar
+                        activeVideo.addEventListener('loadeddata', () => {
+                            clearTimeout(timeoutId);
+                        }, { once: true });
+                    }
+                    
+                    // Pré-carrega a próxima mídia no buffer
+                    preloadNextMedia(nextVideo, index);
+                }
+            }
+            
+            // Função para pré-carregar a próxima mídia no vídeo buffer
+            function preloadNextMedia(bufferVideo, currentIndex) {
+                const nextIndex = (currentIndex + 1) % playlist.length;
+                const nextMidia = playlist[nextIndex];
+                
+                if (nextMidia && !preloadedMedias[nextIndex]) {
+                    console.log('Pré-carregando próxima mídia no buffer:', nextMidia.url);
+                    bufferVideo.src = nextMidia.url;
+                    bufferVideo.load();
+                }
+            }
+            
+            // Função para transição instantânea entre vídeos
+             function transicaoInstantanea() {
+                 const mainVideo = document.getElementById('mainVideo');
+                 const bufferVideo = document.getElementById('bufferVideo');
+                 
+                 console.log('Iniciando transição instantânea. Video ativo:', isMainVideoActive ? 'main' : 'buffer');
+                 
+                 if (isMainVideoActive) {
+                     // Troca para o buffer video
+                     console.log('Trocando para buffer video');
+                     
+                     // Pausa o vídeo atual imediatamente
+                     mainVideo.pause();
+                     
+                     // Transição instantânea - sem delay
+                     mainVideo.style.opacity = '0';
+                     bufferVideo.style.opacity = '1';
+                     
+                     // Reproduz o buffer video imediatamente se estiver pronto
+                     if (bufferVideo.readyState >= 2) { // HAVE_CURRENT_DATA ou melhor
+                         bufferVideo.currentTime = 0;
+                         bufferVideo.play().catch(error => {
+                             console.log('Erro ao reproduzir buffer video:', error);
+                             bufferVideo.muted = true;
+                             bufferVideo.play().catch(console.error);
+                         });
+                     } else {
+                         // Se não estiver pronto, força o carregamento
+                         bufferVideo.load();
+                         bufferVideo.addEventListener('canplay', function() {
+                             bufferVideo.currentTime = 0;
+                             bufferVideo.play().catch(console.error);
+                         }, { once: true });
+                     }
+                 } else {
+                     // Troca para o main video
+                     console.log('Trocando para main video');
+                     
+                     // Pausa o vídeo atual imediatamente
+                     bufferVideo.pause();
+                     
+                     // Transição instantânea - sem delay
+                     bufferVideo.style.opacity = '0';
+                     mainVideo.style.opacity = '1';
+                     
+                     // Reproduz o main video imediatamente se estiver pronto
+                     if (mainVideo.readyState >= 2) { // HAVE_CURRENT_DATA ou melhor
+                         mainVideo.currentTime = 0;
+                         mainVideo.play().catch(error => {
+                             console.log('Erro ao reproduzir main video:', error);
+                             mainVideo.muted = true;
+                             mainVideo.play().catch(console.error);
+                         });
+                     } else {
+                         // Se não estiver pronto, força o carregamento
+                         mainVideo.load();
+                         mainVideo.addEventListener('canplay', function() {
+                             mainVideo.currentTime = 0;
+                             mainVideo.play().catch(console.error);
+                         }, { once: true });
+                     }
+                 }
+                 
+                 // Alterna o vídeo ativo
+                 isMainVideoActive = !isMainVideoActive;
+                 console.log('Transição concluída. Novo vídeo ativo:', isMainVideoActive ? 'main' : 'buffer');
+             }
+            
+            // Função para avançar para próxima mídia
+            function proximaMidia() {
+                console.log('proximaMidia chamada. Índice atual:', currentMediaIndex);
+                currentMediaIndex++;
+                console.log('Novo índice:', currentMediaIndex, 'Total de mídias:', playlist.length);
+                if (currentMediaIndex >= playlist.length) {
+                    currentMediaIndex = 0; // Volta para o início da playlist
+                    console.log('Voltando para o início da playlist. Índice resetado para:', currentMediaIndex);
+                }
+                console.log('Carregando mídia no índice:', currentMediaIndex);
+                
+                // Usa transição instantânea se a próxima mídia já está no buffer
+                 const nextVideo = isMainVideoActive ? document.getElementById('bufferVideo') : document.getElementById('mainVideo');
+                 if (nextVideo.src && nextVideo.readyState >= 3) {
+                     console.log('Usando transição instantânea');
+                     transicaoInstantanea();
+                     // Pré-carrega a próxima mídia no vídeo que ficou inativo
+                     const inactiveVideo = isMainVideoActive ? document.getElementById('bufferVideo') : document.getElementById('mainVideo');
+                     preloadNextMedia(inactiveVideo, currentMediaIndex);
+                 } else {
+                     console.log('Carregando mídia normalmente');
+                     carregarMidia(currentMediaIndex);
+                 }
+            }
+            
+            // Inicializa o display
+            inicializarDisplay();
+            
+            // Função para limpar cache antigo (mais de 7 dias)
+            function limparCacheAntigo() {
+                try {
+                    const deviceKey = localStorage.getItem('deviceKey');
+                    if (!deviceKey) return;
+                    
+                    const timestamp = localStorage.getItem(`device_${deviceKey}_timestamp`);
+                    if (timestamp) {
+                        const cacheDate = new Date(parseInt(timestamp));
+                        const now = new Date();
+                        const diffDays = Math.floor((now - cacheDate) / (1000 * 60 * 60 * 24));
+                        
+                        // Se os dados têm mais de 7 dias, limpa o cache
+                        if (diffDays > 7) {
+                            console.log('Limpando cache antigo...');
+                            limparTodoCache();
+                            console.log('Cache antigo removido.');
+                        }
+                    }
+                    
+                    // Limpa também caches órfãos (sem deviceKey correspondente)
+                    limparCachesOrfaos();
+                } catch (error) {
+                    console.error('Erro ao limpar cache antigo:', error);
+                }
+            }
+            
+            // Função para limpar caches órfãos
+            function limparCachesOrfaos() {
+                try {
+                    const deviceKey = localStorage.getItem('deviceKey');
+                    const keysToRemove = [];
+                    
+                    for (let key in localStorage) {
+                        // Remove caches de dispositivos diferentes do atual
+                        if ((key.startsWith('device_') || key.startsWith('media_')) && 
+                            !key.includes(deviceKey)) {
+                            keysToRemove.push(key);
+                        }
+                    }
+                    
+                    keysToRemove.forEach(key => {
+                        localStorage.removeItem(key);
+                    });
+                    
+                    if (keysToRemove.length > 0) {
+                        console.log(`Removidos ${keysToRemove.length} caches órfãos.`);
+                    }
+                } catch (error) {
+                    console.error('Erro ao limpar caches órfãos:', error);
+                }
+            }
+            
+            // Função para limpar todo o cache do dispositivo atual
+            function limparTodoCache() {
+                try {
+                    const deviceKey = localStorage.getItem('deviceKey');
+                    if (!deviceKey) return;
+                    
+                    const keysToRemove = [];
+                    
+                    // Coleta todas as chaves relacionadas ao dispositivo
+                    for (let key in localStorage) {
+                        if (key.startsWith(`device_${deviceKey}_`) || 
+                            key.startsWith(`media_${deviceKey}_`)) {
+                            keysToRemove.push(key);
+                        }
+                    }
+                    
+                    // Remove as chaves
+                    keysToRemove.forEach(key => {
+                        localStorage.removeItem(key);
+                    });
+                    
+                    console.log(`Cache limpo: ${keysToRemove.length} itens removidos.`);
+                    return keysToRemove.length;
+                } catch (error) {
+                    console.error('Erro ao limpar cache:', error);
+                    return 0;
+                }
+            }
+            
+            // Verifica a chave a cada 30 segundos com suporte offline melhorado
+             setInterval(async function() {
+                 const deviceKey = localStorage.getItem('deviceKey');
+                 if (deviceKey) {
+                     try {
+                         // Tenta verificar online primeiro
+                         const response = await fetch(`http://192.168.0.120:4000/public/device/${deviceKey}`, {
+                             timeout: 5000 // Timeout de 5 segundos
+                         });
+                         
+                         if (response.ok) {
+                             const dadosDispositivo = await response.json();
+                             
+                             // Remove indicador offline se existir
+                             const offlineIndicator = document.getElementById('offlineIndicator');
+                             if (offlineIndicator) {
+                                 offlineIndicator.remove();
+                             }
+                             
+                             // Salva dados atualizados no cache
+                             await salvarDadosCache(deviceKey, dadosDispositivo);
+                             
+                             if (dadosDispositivo && showPlay.style.display === 'none') {
+                                 // Chave foi validada - inicializa o player
+                                 showKey.style.display = 'none';
+                                 showPlay.style.display = 'block';
+                                 
+                                 // Configura o layout baseado no showClienteInfo do dispositivo
+                                 configurarLayout(dadosDispositivo.device.showClienteInfo, dadosDispositivo);
+                                 
+                                 inicializarVideo(dadosDispositivo.panel.medias);
+                             } else if (dadosDispositivo && showPlay.style.display === 'block') {
+                                 // Configura o layout (pode ter mudado no painel administrativo)
+                                 configurarLayout(dadosDispositivo.device.showClienteInfo, dadosDispositivo);
+                                 
+                                 // Verifica se a playlist mudou APENAS se não estiver reproduzindo
+                                 const mainVideo = document.getElementById('mainVideo');
+                                 const bufferVideo = document.getElementById('bufferVideo');
+                                 const isPlaying = (mainVideo && !mainVideo.paused) || (bufferVideo && !bufferVideo.paused);
+                                 
+                                 if (JSON.stringify(playlist) !== JSON.stringify(dadosDispositivo.panel.medias)) {
+                                     if (!isPlaying) {
+                                         console.log('Playlist atualizada, recarregando mídias...');
+                                         inicializarVideo(dadosDispositivo.panel.medias);
+                                     } else {
+                                         console.log('Playlist atualizada, mas vídeo está reproduzindo. Aguardando próxima verificação.');
+                                     }
+                                 }
+                             }
+                         } else {
+                             console.log('API indisponível, continuando em modo offline');
+                             adicionarIndicadorOffline();
+                             
+                             // Se o player não estiver visível, tenta carregar do cache
+                             if (showPlay.style.display === 'none') {
+                                 const dadosCache = await carregarDadosCache(deviceKey);
+                                 if (dadosCache && dadosCache.panel && dadosCache.panel.medias && dadosCache.panel.medias.length > 0) {
+                                     console.log('Carregando dados do cache em modo offline');
+                                     showKey.style.display = 'none';
+                                     showPlay.style.display = 'block';
+                                     configurarLayout(dadosCache.device.showClienteInfo, dadosCache);
+                                     inicializarVideo(dadosCache.panel.medias);
+                                 }
+                             }
+                         }
+                     } catch (error) {
+                         console.log('Erro de conexão, continuando em modo offline:', error);
+                         adicionarIndicadorOffline();
+                         
+                         // Se o player não estiver visível, tenta carregar do cache
+                         if (showPlay.style.display === 'none') {
+                             const dadosCache = await carregarDadosCache(deviceKey);
+                             if (dadosCache && dadosCache.panel && dadosCache.panel.medias && dadosCache.panel.medias.length > 0) {
+                                 console.log('Carregando dados do cache após erro de conexão');
+                                 showKey.style.display = 'none';
+                                 showPlay.style.display = 'block';
+                                 configurarLayout(dadosCache.device.showClienteInfo, dadosCache);
+                                 inicializarVideo(dadosCache.panel.medias);
+                             }
+                         }
+                     }
+                 }
+                 
+                 // Limpa cache antigo a cada verificação
+                 limparCacheAntigo();
+             }, 30000);
+             
+             // Limpa cache antigo na inicialização
+             limparCacheAntigo();
+        });
+    </script>
+</body>
+
+</html>

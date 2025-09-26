@@ -107,8 +107,8 @@
                     <div>
                         <nav aria-label="breadcrumb" class="mb-2">
                             <ol class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
-                                <li class="breadcrumb-item active" aria-current="page">Painel: <span id="painelNome"></span></li>
+                               
+                                <li class="breadcrumb-item active" aria-current="page"><span id="painelNome"></span></li>
                             </ol>
                         </nav>
                         <h1 class="page-title">Gerenciar Mídias - <span id="painelTitulo"></span></h1>
@@ -706,7 +706,7 @@
             try {
                 console.log('Carregando mídia para edição:', id);
 
-                const resposta = await fetch(`/public/midia/${id}`, {
+                const resposta = await fetch(`${buildApiUrl('/private/midia')}/${id}`, {
                     headers: {
                         "Authorization": "Bearer " + token
                     }

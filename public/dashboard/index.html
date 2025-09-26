@@ -41,12 +41,12 @@
 </head>
 
 <body>
-  <!-- Overlay para sidebar em dispositivos móveis -->
-  <div class="sidebar-overlay"></div>
+  <!-- Mobile sidebar overlay -->
+  <div class="sidebar-overlay d-lg-none"></div>
 
   <div class="wrapper">
     <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
+    <nav class="sidebar d-none d-lg-block" id="sidebar">
       <div class="sidebar-header">
         <img src="../img/logo.png" alt="Logo VixMídia" class="img-fluid">
         <button class="sidebar-toggle">
@@ -76,7 +76,13 @@
         <li>
           <a class="sidebar-link" href="midias.html">
             <i class="bi bi-collection-play"></i>
-            <span>Mídias</span>
+            <span>Minhas Mídias</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="midias.html">
+            <i class="bi bi-repeat"></i>
+            <span>Mídias globais</span>
           </a>
         </li>
         <li>
@@ -107,41 +113,25 @@
 
       <hr>
 
-      <ul class="list-unstyled">
-        <li>
-          <a class="sidebar-link" href="configuracoes.html">
-            <i class="bi bi-gear"></i>
-            <span>Configurações</span>
-          </a>
-        </li>
-        <li>
-          <a class="sidebar-link" href="#" id="logoutBtnSidebar">
-            <i class="bi bi-box-arrow-left"></i>
-            <span>Sair</span>
-          </a>
-        </li>
-      </ul>
+     
+
+      <!-- Mobile menu toggle button -->
+      <button class="btn btn-primary d-lg-none position-fixed" 
+              style="bottom: 20px; right: 20px; z-index: 1030;"
+              onclick="document.getElementById('sidebar').classList.toggle('d-none')">
+        <i class="bi bi-list"></i>
+      </button>
 
       <!-- Informações do usuário -->
       <div class="sidebar-footer mt-auto">
         <div class="d-flex align-items-center mb-3">
           <div class="sidebar-user-icon me-2">
-            <i class="bi bi-person-circle text-white" style="font-size: 1.5rem;"></i>
+           
           </div>
-          <div class="sidebar-user-info">
-            <span id="userName" class="text-white">Usuário</span>
-          </div>
+          
         </div>
         <!-- Toggle de tema claro/escuro -->
-        <div class="px-0 py-2">
-          <div class="form-check form-switch d-flex align-items-center">
-            <input class="form-check-input me-2" type="checkbox" id="themeToggle">
-            <label class="form-check-label text-white" for="themeToggle">
-              <i class="bi bi-moon"></i>
-              <span class="ms-2">Modo Escuro</span>
-            </label>
-          </div>
-        </div>
+        
       </div>
     </nav>
 
@@ -750,9 +740,9 @@
         }
         
         // Função para atualizar a logo do usuário na sidebar (corrigida)
-function updateUserLogo(avatarUrl) {
-  const sidebarLogo = document.querySelector('.sidebar-header img');
-  if (sidebarLogo && avatarUrl) {
+  function updateUserLogo(avatarUrl) {
+    const sidebarLogo = document.querySelector('.sidebar-header img');
+     if (sidebarLogo && avatarUrl) {
     sidebarLogo.src = `${avatarUrl}?t=${Date.now()}`;
     // Preservar a imagem original e centralizá-la
     sidebarLogo.style.borderRadius = '0'; // Remove o formato circular
@@ -800,7 +790,7 @@ async function loadUserData() {
       
       // Carregar avatar se existir
       if (user.picture) {
-        const fullAvatarUrl = `${APP_CONFIG.API_BASE_URL}/public${user.picture}`;
+        const fullAvatarUrl = user.picture;
         
         // Atualizar avatar no modal
         const userAvatarModal = document.getElementById('userAvatarModal');

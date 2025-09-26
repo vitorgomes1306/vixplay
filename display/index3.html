@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VixMídia Display v3 - Teste Simples</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #loadingScreen {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        #keyScreen {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: none;
+        }
+
+        #errorScreen {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            display: none;
+        }
+
+        #mediaContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: none;
+            z-index: 100;
+        }
+
+        #videoPlayer {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            background: #000;
+        }
+
+        #imageDisplay {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            display: none;
+        }
+
+        #bottomBar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 200;
+        }
+
+        #logoContainer {
+            display: flex;
+            align-items: center;
+        }
+
+        #logoContainer img {
+            height: 50px;
+            margin-right: 15px;
+        }
+
+        #contactInfo {
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .screen h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .screen p {
+            font-size: 1.2em;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        #debugInfo {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-width: 400px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 9999;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Tela de Carregamento -->
+    <div id="loadingScreen" class="screen">
+        <div class="loading-spinner"></div>
+        <h1>VixMídia Display</h1>
+        <p id="loadingStatus">Inicializando...</p>
+    </div>
+
+    <!-- Tela de Cadastro de Chave -->
+    <div id="keyScreen" class="screen">
+        <h1>🔑 Dispositivo não cadastrado</h1>
+        <p>Chave do dispositivo:</p>
+        <p id="deviceKeyDisplay" style="font-family: monospace; font-size: 1.5em; margin: 20px 0;"></p>
+        <p>Acesse o painel administrativo para cadastrar este dispositivo.</p>
+    </div>
+
+    <!-- Tela de Erro -->
+    <div id="errorScreen" class="screen">
+        <h1>⚠️ Erro de Conexão</h1>
+        <p>Não foi possível conectar ao servidor.</p>
+        <p>Verificando conexão...</p>
+    </div>
+
+    <!-- Container de Mídia -->
+    <div id="mediaContainer">
+        <video id="videoPlayer" muted autoplay playsinline preload="metadata"></video>
+        <img id="imageDisplay" alt="Mídia">
+    </div>
+
+    <!-- Barra Inferior -->
+    <div id="bottomBar">
+        <div id="logoContainer">
+            <img src="/public/img/vixmidia_fundo_branco.png" alt="Logo" id="userLogo">
+            <div>
+                <div style="font-weight: bold;">VixMídia</div>
+                <div style="font-size: 12px; opacity: 0.8;">Mídia Digital</div>
+            </div>
+        </div>
+        <div id="contactInfo">
+            <div>📞 (27) 99999-9999</div>
+            <div>📧 contato@vixmidia.com</div>
+        </div>
+    </div>
+
+    <!-- Debug Info -->
+    <div id="debugInfo">Iniciando debug...</div>
+
+    <!-- Config -->
+    <script src="config.js"></script>
+
+    <script>
+        // Variáveis globais
+        let deviceKey = '';
+        let mediaList = [];
+        let currentMediaIndex = 0;
+        let currentTimeout = null;
+        let checkInterval = null;
+        let isDeviceValidated = false;
+        let isSystemOnline = true;
+        let consecutiveFailures = 0;
+        const MAX_CONSECUTIVE_FAILURES = 3;
+        
+        // Função para configurar layout baseado no formato do dispositivo
+        function configureDeviceLayout(deviceFormat) {
+          const body = document.body;
+          
+          console.log(`🖥️ Configurando layout para formato: ${deviceFormat}`);
+          
+          // Remove classes anteriores
+          body.classList.remove('device-vertical', 'device-horizontal');
+          
+          if (deviceFormat === 'VERTICAL') {
+            // Layout vertical: mídias "em pé"
+            body.classList.add('device-vertical');
+            console.log('📱 Layout configurado para VERTICAL (mídias em pé)');
+          } else {
+            // Layout horizontal: mídias "deitadas" (padrão)
+            body.classList.add('device-horizontal');
+            console.log('🖥️ Layout configurado para HORIZONTAL (mídias deitadas)');
+          }
+          
+          // Armazenar formato do dispositivo para uso posterior
+          window.deviceFormat = deviceFormat;
+        }
+
+        // Elementos DOM
+        const loadingScreen = document.getElementById('loadingScreen');
+        const keyScreen = document.getElementById('keyScreen');
+        const errorScreen = document.getElementById('errorScreen');
+        const mediaContainer = document.getElementById('mediaContainer');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const imageDisplay = document.getElementById('imageDisplay');
+        const bottomBar = document.getElementById('bottomBar');
+        const loadingStatus = document.getElementById('loadingStatus');
+        const deviceKeyDisplay = document.getElementById('deviceKeyDisplay');
+        const debugInfo = document.getElementById('debugInfo');
+
+        // Função de debug
+        function updateDebug(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            console.log(logMessage);
+            
+            debugInfo.innerHTML = logMessage + '<br>' + debugInfo.innerHTML;
+            
+            // Manter apenas as últimas 15 mensagens
+            const lines = debugInfo.innerHTML.split('<br>');
+            if (lines.length > 15) {
+                debugInfo.innerHTML = lines.slice(0, 15).join('<br>');
+            }
+        }
+
+        // Gerar chave única do dispositivo
+        function generateDeviceKey() {
+            const stored = localStorage.getItem('vixmidia_device_key');
+            if (stored) {
+                updateDebug(`Chave existente: ${stored}`);
+                return stored;
+            }
+            
+            const key = 'DEV_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('vixmidia_device_key', key);
+            updateDebug(`Nova chave gerada: ${key}`);
+            return key;
+        }
+
+        // Funções de tela
+        function showLoadingScreen() {
+            updateDebug('Mostrando tela de carregamento');
+            loadingScreen.style.display = 'flex';
+            keyScreen.style.display = 'none';
+            errorScreen.style.display = 'none';
+            mediaContainer.style.display = 'none';
+            bottomBar.style.display = 'none';
+        }
+
+        function showKeyScreen() {
+            updateDebug('Mostrando tela de cadastro de chave');
+            loadingScreen.style.display = 'none';
+            keyScreen.style.display = 'flex';
+            errorScreen.style.display = 'none';
+            mediaContainer.style.display = 'none';
+            bottomBar.style.display = 'none';
+            deviceKeyDisplay.textContent = deviceKey;
+        }
+
+        function showErrorScreen() {
+            updateDebug('Mostrando tela de erro');
+            loadingScreen.style.display = 'none';
+            keyScreen.style.display = 'none';
+            errorScreen.style.display = 'flex';
+            mediaContainer.style.display = 'none';
+            bottomBar.style.display = 'none';
+        }
+
+        function showMediaContainer() {
+            updateDebug('Mostrando container de mídia');
+            loadingScreen.style.display = 'none';
+            keyScreen.style.display = 'none';
+            errorScreen.style.display = 'none';
+            mediaContainer.style.display = 'block';
+            bottomBar.style.display = 'flex';
+        }
+
+        // Verificar dispositivo e mídias
+        async function checkDeviceAndMedias() {
+            try {
+                updateDebug(`Verificando dispositivo: ${deviceKey}`);
+                
+                const apiUrl = buildDisplayApiUrl(DISPLAY_CONFIG.API_ENDPOINTS.DEVICE_BY_KEY.replace(':key', deviceKey));
+                updateDebug(`URL da API: ${apiUrl}`);
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                updateDebug(`Status da resposta: ${response.status}`);
+                
+                if (response.status === 404) {
+                    updateDebug('Dispositivo não encontrado - mostrando tela de cadastro');
+                    showKeyScreen();
+                    return;
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                updateDebug('Dados do dispositivo recebidos');
+                console.log('📱 Dados completos:', data);
+                
+                // Armazena os dados do dispositivo e painel
+        if (data.device) {
+          console.log('📱 Dados do dispositivo:', data.device);
+          window.deviceData = data.device;
+          console.log(`✅ Dispositivo "${data.device.name}" conectado com sucesso!`);
+          
+          // Configurar layout baseado no formato do dispositivo
+          const deviceFormat = data.device.format || 'HORIZONTAL';
+          configureDeviceLayout(deviceFormat);
+        }
+        
+        if (data.panel) {
+          console.log('📺 Dados do painel:', data.panel);
+          window.panelData = data.panel;
+          console.log(`📋 Painel: "${data.panel.name}" com ${data.panel.medias.length} mídia(s)`);
+        }
+                
+                isDeviceValidated = true;
+                
+                // Processar mídias do painel
+                let newMedias = [];
+                if (data.panel && data.panel.medias && data.panel.medias.length > 0) {
+                    newMedias = data.panel.medias.map(media => ({
+                        id: media.id,
+                        name: media.title || media.name || 'Mídia sem nome',
+                        url: media.url,
+                        type: media.type,
+                        displayTime: media.duration || 10
+                    }));
+                    updateDebug(`${newMedias.length} mídias encontradas`);
+                    console.log('🎬 Mídias processadas:', newMedias);
+                } else {
+                    updateDebug('Nenhuma mídia encontrada no painel');
+                }
+                
+                if (newMedias.length === 0) {
+                    updateDebug('Lista de mídias vazia - mostrando tela de cadastro');
+                    showKeyScreen();
+                    return;
+                }
+                
+                // Atualizar lista de mídias
+                mediaList = newMedias;
+                updateDebug('Lista de mídias atualizada');
+                
+                // Iniciar reprodução
+                updateDebug('Iniciando reprodução de mídias');
+                showMediaContainer();
+                startMediaPlayback();
+                
+            } catch (error) {
+                console.error('❌ Erro ao verificar dispositivo:', error);
+                updateDebug(`Erro: ${error.message}`);
+                
+                if (error.name === 'AbortError') {
+                    updateDebug('Timeout na conexão');
+                } else {
+                    updateDebug('Erro de conexão com servidor');
+                }
+                
+                showErrorScreen();
+                
+                // Tentar novamente em 10 segundos
+                setTimeout(() => {
+                    updateDebug('Tentando reconectar...');
+                    checkDeviceAndMedias();
+                }, 10000);
+            }
+        }
+
+        // Iniciar reprodução de mídias
+        function startMediaPlayback() {
+            if (mediaList.length === 0) {
+                updateDebug('Nenhuma mídia para reproduzir');
+                return;
+            }
+            
+            updateDebug(`Iniciando playlist com ${mediaList.length} mídias`);
+            currentMediaIndex = 0;
+            playCurrentMedia();
+        }
+
+        // Reproduzir mídia atual
+        function playCurrentMedia() {
+            if (mediaList.length === 0) {
+                updateDebug('Lista de mídias vazia');
+                return;
+            }
+            
+            if (currentTimeout) {
+                clearTimeout(currentTimeout);
+                currentTimeout = null;
+            }
+            
+            const media = mediaList[currentMediaIndex];
+            updateDebug(`Reproduzindo mídia ${currentMediaIndex + 1}/${mediaList.length}: ${media.name} (${media.type})`);
+            console.log('🎯 Mídia atual:', media);
+            
+            if (media.type === 'video') {
+                playVideo(media);
+            } else if (media.type === 'image') {
+                playImage(media);
+            } else {
+                updateDebug(`Tipo de mídia desconhecido: ${media.type}`);
+                nextMedia();
+            }
+        }
+
+        // Reproduzir vídeo
+        function playVideo(media) {
+            updateDebug(`Carregando vídeo: ${media.url}`);
+            
+            // Mostrar vídeo, ocultar imagem
+            imageDisplay.style.display = 'none';
+            videoPlayer.style.display = 'block';
+            
+            // Reset do player
+            videoPlayer.pause();
+            videoPlayer.currentTime = 0;
+            
+            // Limpar eventos anteriores
+            videoPlayer.onloadeddata = null;
+            videoPlayer.oncanplay = null;
+            videoPlayer.onplay = null;
+            videoPlayer.onended = null;
+            videoPlayer.onerror = null;
+            
+            // Configurar eventos
+            videoPlayer.onloadeddata = () => {
+                updateDebug('Vídeo carregado - dados disponíveis');
+            };
+            
+            videoPlayer.oncanplay = () => {
+                updateDebug('Vídeo pronto para reproduzir');
+                
+                // Tentar reproduzir
+                const playPromise = videoPlayer.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        updateDebug('✅ Vídeo reproduzindo com sucesso');
+                        
+                        // Configurar timeout para próxima mídia
+                        const duration = (media.displayTime || 10) * 1000;
+                        updateDebug(`Timeout configurado para ${duration}ms`);
+                        
+                        currentTimeout = setTimeout(() => {
+                            updateDebug('Timeout atingido - próxima mídia');
+                            nextMedia();
+                        }, duration);
+                        
+                    }).catch(error => {
+                        console.error('❌ Erro ao reproduzir vídeo:', error);
+                        updateDebug(`Erro na reprodução: ${error.message}`);
+                        
+                        // Tentar com interação do usuário
+                        updateDebug('Aguardando interação do usuário...');
+                        const clickHandler = function() {
+                            updateDebug('Clique detectado - tentando reproduzir');
+                            videoPlayer.play().then(() => {
+                                updateDebug('✅ Reprodução iniciada após clique');
+                                document.removeEventListener('click', clickHandler);
+                            }).catch(() => {
+                                updateDebug('Falha mesmo com interação - próxima mídia');
+                                nextMedia();
+                            });
+                        };
+                        
+                        document.addEventListener('click', clickHandler);
+                        
+                        // Fallback: continuar após 5 segundos
+                        setTimeout(() => {
+                            document.removeEventListener('click', clickHandler);
+                            updateDebug('Timeout de interação - próxima mídia');
+                            nextMedia();
+                        }, 5000);
+                    });
+                } else {
+                    updateDebug('Play() não retornou Promise - configurando timeout');
+                    const duration = (media.displayTime || 10) * 1000;
+                    currentTimeout = setTimeout(() => {
+                        nextMedia();
+                    }, duration);
+                }
+            };
+            
+            videoPlayer.onended = () => {
+                updateDebug('Vídeo finalizado naturalmente');
+                if (currentTimeout) {
+                    clearTimeout(currentTimeout);
+                    currentTimeout = null;
+                }
+                nextMedia();
+            };
+            
+            videoPlayer.onerror = (e) => {
+                const error = videoPlayer.error;
+                let errorMessage = 'Erro desconhecido';
+                
+                if (error) {
+                    switch (error.code) {
+                        case error.MEDIA_ERR_ABORTED:
+                            errorMessage = 'Reprodução abortada';
+                            break;
+                        case error.MEDIA_ERR_NETWORK:
+                            errorMessage = 'Erro de rede';
+                            break;
+                        case error.MEDIA_ERR_DECODE:
+                            errorMessage = 'Erro de decodificação';
+                            break;
+                        case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                            errorMessage = 'Formato não suportado';
+                            break;
+                    }
+                }
+                
+                console.error('❌ Erro no vídeo:', errorMessage, error);
+                updateDebug(`Erro no vídeo: ${errorMessage}`);
+                nextMedia();
+            };
+            
+            // Definir src e carregar
+            videoPlayer.src = media.url;
+            videoPlayer.load();
+            updateDebug('Vídeo carregando...');
+        }
+
+        // Exibir imagem
+        function playImage(media) {
+            updateDebug(`Carregando imagem: ${media.url}`);
+            
+            // Mostrar imagem, ocultar vídeo
+            videoPlayer.style.display = 'none';
+            imageDisplay.style.display = 'block';
+            
+            // Pausar vídeo se estiver reproduzindo
+            videoPlayer.pause();
+            
+            // Limpar eventos anteriores
+            imageDisplay.onload = null;
+            imageDisplay.onerror = null;
+            
+            imageDisplay.onload = () => {
+                updateDebug('✅ Imagem carregada com sucesso');
+                
+                const duration = (media.displayTime || 10) * 1000;
+                updateDebug(`Timeout da imagem configurado para ${duration}ms`);
+                
+                currentTimeout = setTimeout(() => {
+                    updateDebug('Timeout da imagem atingido - próxima mídia');
+                    nextMedia();
+                }, duration);
+            };
+            
+            imageDisplay.onerror = (e) => {
+                console.error('❌ Erro ao carregar imagem:', e);
+                updateDebug(`Erro ao carregar imagem: ${media.url}`);
+                nextMedia();
+            };
+            
+            imageDisplay.src = media.url;
+            updateDebug('Imagem carregando...');
+        }
+
+        // Avançar para próxima mídia
+        function nextMedia() {
+            if (currentTimeout) {
+                clearTimeout(currentTimeout);
+                currentTimeout = null;
+            }
+            
+            currentMediaIndex++;
+            if (currentMediaIndex >= mediaList.length) {
+                currentMediaIndex = 0;
+                updateDebug('Reiniciando playlist do início');
+            }
+            
+            updateDebug(`Avançando para mídia ${currentMediaIndex + 1}/${mediaList.length}`);
+            
+            // Pequeno delay antes da próxima mídia
+            setTimeout(() => {
+                playCurrentMedia();
+            }, 1000);
+        }
+
+        // Inicialização da aplicação
+        async function init() {
+            try {
+                updateDebug('🚀 Iniciando aplicação VixMídia Display v3');
+                
+                loadingStatus.textContent = 'Gerando chave do dispositivo...';
+                deviceKey = generateDeviceKey();
+                
+                loadingStatus.textContent = 'Verificando conexão com servidor...';
+                updateDebug('Iniciando verificação do dispositivo');
+                
+                await checkDeviceAndMedias();
+                
+                // Configurar verificação periódica a cada 30 segundos
+                if (checkInterval) {
+                    clearInterval(checkInterval);
+                }
+                
+                checkInterval = setInterval(() => {
+                    if (!currentTimeout) {
+                        updateDebug('Verificação periódica do servidor');
+                        checkDeviceAndMedias();
+                    }
+                }, 30000);
+                
+                updateDebug('Inicialização concluída');
+                
+            } catch (error) {
+                console.error('❌ Erro na inicialização:', error);
+                updateDebug(`Erro crítico na inicialização: ${error.message}`);
+                showErrorScreen();
+            }
+        }
+
+        // Inicializar quando DOM estiver pronto
+        updateDebug('DOM carregado - preparando inicialização');
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        // Clique para debug manual
+        document.addEventListener('click', (e) => {
+            if (e.ctrlKey) {
+                updateDebug('🖱️ Clique manual detectado (Ctrl+Click)');
+                console.log('Estado atual:', {
+                    deviceKey,
+                    mediaList,
+                    currentMediaIndex,
+                    isDeviceValidated,
+                    currentTimeout: !!currentTimeout
+                });
+            }
+        });
+
+        // Log de erros globais
+        window.addEventListener('error', (e) => {
+            updateDebug(`❌ Erro global: ${e.message}`);
+            console.error('Erro global:', e);
+        });
+
+        window.addEventListener('unhandledrejection', (e) => {
+            updateDebug(`❌ Promise rejeitada: ${e.reason}`);
+            console.error('Promise rejeitada:', e);
+        });
+    </script>
+</body>
+</html>
+
+        

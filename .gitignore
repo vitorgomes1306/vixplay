@@ -3,3 +3,9 @@ node_modules
 .env
 
 /generated/prisma
+prisma/migrations
+.dockerignore
+temp/
+lib/
+migrations/
+vix-midia/

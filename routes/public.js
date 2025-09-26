@@ -10,6 +10,7 @@ import nodemailer from "nodemailer";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
+//configurações do smtp para envio de emails
 const transporter = nodemailer.createTransport({
   host: "smtp.zoho.com",
   port: 465,
@@ -256,7 +257,9 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Rota pública para buscar mídias de um painel específico
+//====================================================================================================================
+// Rota pública para buscar mídias de um painel específico (Rota usada no endpont do APP Display da Vix Midia)
+//====================================================================================================================
 router.get('/device/:deviceKey', async (req, res) => {
   const { deviceKey } = req.params;
 
@@ -264,7 +267,15 @@ router.get('/device/:deviceKey', async (req, res) => {
     // Busca dispositivo pelo `deviceKey`
     const device = await prisma.device.findUnique({
       where: { deviceKey },
-      include: { panel: true }, // Inclui detalhes do painel associado
+      include: { 
+        panel: {
+          include: {
+            user: {
+              
+            }
+          }
+        }
+      },
     });
 
     if (!device) {
@@ -281,17 +292,37 @@ router.get('/device/:deviceKey', async (req, res) => {
 
     console.log(`✅ Dispositivo "${device.name}" (Key: ${device.deviceKey}) está ONLINE.`);
 
-    // Busca todas as mídias associadas ao painel do dispositivo
-    const medias = await prisma.media.findMany({
-      where: { panelId: device.panel.id }, // Busca mídias relacionadas ao painel
-      select: { id: true, url: true, type: true, title: true, duration: true },
+    // Busca diretamente as mídias relacionadas ao painel do dispositivo
+    const medias = await prisma.medias.findMany({
+      where: {
+        panelId: device.panel.id
+      }
     });
 
-    // Retorna o painel e as mídias deste dispositivo
+    // Retorna o dispositivo, usuário, painel e as mídias
     return res.status(200).json({
       message: medias.length > 0
-        ? 'Painel e mídias encontrados com sucesso.'
-        : 'Painel encontrado, mas sem mídias associadas.',
+        ? 'Dispositivo, usuário, painel e mídias encontrados com sucesso.'
+        : 'Dispositivo, usuário e painel encontrados, mas sem mídias associadas.',
+      device: {
+        id: device.id,
+        name: device.name,
+        deviceKey: device.deviceKey,
+        format: device.format,
+        panelId: device.panelId,
+        type: device.type,
+        status: device.status,
+        statusDevice: device.statusDevice,
+        createdAt: device.createdAt,
+        updatedAt: device.updatedAt,
+        geoLocation: device.geoLocation,
+        showClientInfo: device.showClientInfo
+      },
+      user: {
+        id: device.panel.user.id,
+        name: device.panel.user.name,
+        picture: device.panel.user.picture
+      },
       panel: {
         id: device.panel.id,
         name: device.panel.name,

@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="stylev5.css">
+
+</head>
+
+<body>
+    <!-- div oculta para exibir key -->
+    <div id="keyRegistrationContainer">
+        <div id="keyRegistrationBox">
+            Chave de acesso<br>
+            <span id="keySpan"></span>
+            <!-- Aqui vem a chave -->
+
+        </div>
+    </div>
+
+    <!-- div para mostrar carregamento das mídias -->
+    <div id="carregandoMidias" style="display: none;">
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 9999;">
+            <div style="text-align: center; color: white; font-family: Arial, sans-serif;">
+                <div style="font-size: 24px; margin-bottom: 20px;">Carregando Mídias...</div>
+                <div id="progressoCarregamento" style="font-size: 16px; margin-bottom: 10px;">0%</div>
+                <div style="width: 300px; height: 20px; background: #333; border-radius: 10px; overflow: hidden;">
+                    <div id="barraProgresso" style="width: 0%; height: 100%; background: linear-gradient(90deg, #007bff, #0056b3); transition: width 0.3s ease;"></div>
+                </div>
+                <div id="statusCarregamento" style="font-size: 14px; margin-top: 10px; color: #ccc;">Preparando...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="carregandoMidias">
+
+        carregando midias
+    </div>
+
+    <!-- div oculta para exibir play de midias -->
+    <div id="mediaPlayContainer">
+        <div class="container">
+            <div class="superior" id="superiorContainer">
+                <!-- Conteúdo da Div Superior (90%) -->
+                <!-- player de video em javascript -->
+
+                <div id="video-container"></div>
+
+                <video id="player" autoplay muted playsinline preload="auto"
+                    style="width:100%; height:100%; object-fit:cover; background:black; display:none;">
+                </video>
+
+                <script>
+                    // Variável playlist para armazenar os resultados do objeto medias do JSON
+                    let playlist = [];
+                    let preloadedVideos = [];
+                    let currentIndex = 0;
+                    const player = document.getElementById("player");
+
+                    // Função para mostrar/esconder div de carregamento
+                    function showLoadingDiv(show) {
+                        const loadingDiv = document.getElementById('carregandoMidias');
+                        loadingDiv.style.display = show ? 'block' : 'none';
+                    }
+
+                    // Função para atualizar progresso do carregamento
+                    function updateLoadingProgress(current, total, status) {
+                        const progressPercent = Math.round((current / total) * 100);
+                        document.getElementById('progressoCarregamento').textContent = `${progressPercent}%`;
+                        document.getElementById('barraProgresso').style.width = `${progressPercent}%`;
+                        document.getElementById('statusCarregamento').textContent = status;
+                    }
+
+                    // Função para pré-carregar uma mídia no cache
+                    function preloadVideo(mediaUrl, mediaName) {
+                        return new Promise((resolve, reject) => {
+                            console.log(`🔍 Tentando carregar: ${mediaName} | URL: ${mediaUrl}`);
+                            
+                            // Configurações específicas para Windows
+                            const video = document.createElement('video');
+                            video.preload = 'metadata'; // Carrega metadados para melhor performance no Windows
+                            video.muted = true;
+                            video.controls = false;
+                            video.setAttribute('webkit-playsinline', 'true');
+                            video.setAttribute('playsinline', 'true');
+                            video.setAttribute('disablePictureInPicture', 'true');
+                            // Configurações para evitar travamentos no Windows
+                            video.style.objectFit = 'contain';
+                            video.crossOrigin = 'anonymous';
+                            
+                            let hasResolved = false;
+                            let loadTimeout;
+                            
+                            // Função para limpar e resolver
+                            const cleanupAndResolve = (result) => {
+                                if (!hasResolved) {
+                                    hasResolved = true;
+                                    if (loadTimeout) clearTimeout(loadTimeout);
+                                    resolve(result);
+                                }
+                            };
+                            
+                            // Função para limpar e rejeitar
+                            const cleanupAndReject = (error) => {
+                                if (!hasResolved) {
+                                    hasResolved = true;
+                                    if (loadTimeout) clearTimeout(loadTimeout);
+                                    reject(error);
+                                }
+                            };
+                            
+                            // Timeout de 15 segundos
+                            loadTimeout = setTimeout(() => {
+                                console.error(`⏰ Timeout ao carregar: ${mediaName}`);
+                                cleanupAndReject(new Error('Timeout'));
+                            }, 15000);
+                            
+                            // Event listener para quando os metadados são carregados
+                            video.addEventListener('loadedmetadata', () => {
+                                console.log(`✅ Metadados carregados: ${mediaName} | Duração: ${video.duration}s`);
+                                
+                                // Detectar orientação da mídia
+                                const isVerticalMedia = video.videoHeight > video.videoWidth;
+                                video.mediaOrientation = isVerticalMedia ? 'vertical' : 'horizontal';
+                                
+                                console.log(`📐 Orientação da mídia ${mediaName}: ${video.mediaOrientation} (${video.videoWidth}x${video.videoHeight})`);
+                                
+                                cleanupAndResolve(video);
+                            });
+                            
+                            // Event listener para erros
+                            video.addEventListener('error', (e) => {
+                                console.error(`❌ Erro ao carregar mídia: ${mediaName}`);
+                                console.error(`❌ URL: ${mediaUrl}`);
+                                
+                                if (video.error) {
+                                    console.error(`❌ Código do erro: ${video.error.code}`);
+                                    console.error(`❌ Mensagem do erro: ${video.error.message}`);
+                                    
+                                    switch(video.error.code) {
+                                        case 1:
+                                            console.error('❌ MEDIA_ERR_ABORTED: Carregamento abortado pelo usuário');
+                                            break;
+                                        case 2:
+                                            console.error('❌ MEDIA_ERR_NETWORK: Erro de rede durante o download');
+                                            break;
+                                        case 3:
+                                            console.error('❌ MEDIA_ERR_DECODE: Erro ao decodificar o arquivo');
+                                            break;
+                                        case 4:
+                                            console.error('❌ MEDIA_ERR_SRC_NOT_SUPPORTED: Formato de arquivo não suportado');
+                                            break;
+                                        default:
+                                            console.error('❌ Erro desconhecido');
+                                    }
+                                }
+                                
+                                cleanupAndReject(new Error(`Erro ao carregar ${mediaName}: ${video.error ? video.error.message : 'Erro desconhecido'}`));
+                            });
+                            
+                            // Event listener para início do carregamento
+                            video.addEventListener('loadstart', () => {
+                                console.log(`🔄 Iniciando carregamento: ${mediaName}`);
+                            });
+                            
+                            // Definir a fonte e iniciar o carregamento
+                            console.log(`🎬 Definindo src para: ${mediaUrl}`);
+                            video.src = mediaUrl;
+                            
+                            // Forçar o carregamento dos metadados
+                            video.load();
+                        });
+                    }
+
+                    // Função para testar se a API está acessível
+                    async function testApiConnection() {
+                        try {
+                            // Testa um endpoint real da API em vez de um diretório de arquivos
+                            const testUrl = `${DISPLAY_CONFIG.API_BASE_URL}/public/device/check-device`;
+                            console.log(`🔍 Testando conexão com API: ${testUrl}`);
+                            
+                            const response = await fetch(testUrl, { 
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ deviceKey: 'test' })
+                            });
+                            console.log(`📡 Status da API: ${response.status}`);
+                            // Considera sucesso se a API responder (mesmo que seja erro 400/404)
+                            return response.status < 500;
+                        } catch (error) {
+                            console.error('❌ Erro ao conectar com a API:', error);
+                            return false;
+                        }
+                    }
+
+                    // Função para testar se um arquivo específico existe
+                    async function testFileExists(fileUrl) {
+                        try {
+                            console.log(`🔍 Verificando se arquivo existe: ${fileUrl}`);
+                            const response = await fetch(fileUrl, { method: 'HEAD' });
+                            console.log(`📄 Status do arquivo: ${response.status}`);
+                            return response.ok;
+                        } catch (error) {
+                            console.error(`❌ Erro ao verificar arquivo: ${fileUrl}`, error);
+                            return false;
+                        }
+                    }
+
+                    // Função para pré-carregar todas as mídias
+                    async function preloadAllVideos() {
+                        if (playlist.length === 0) {
+                            console.log('Playlist vazia, nada para carregar');
+                            return;
+                        }
+
+                        // Testa conexão com API primeiro
+                        const apiConnected = await testApiConnection();
+                        if (!apiConnected) {
+                            console.error('❌ API não está acessível. Verifique se o servidor está rodando.');
+                            updateLoadingProgress(0, playlist.length, 'Erro: API não acessível');
+                            return;
+                        }
+
+                        showLoadingDiv(true);
+                        updateLoadingProgress(0, playlist.length, 'Iniciando carregamento...');
+                        
+                        preloadedVideos = [];
+                        
+                        for (let i = 0; i < playlist.length; i++) {
+                            const media = playlist[i];
+                            const mediaUrl = media.url; // Usa a URL original da API
+                            const mediaName = media.name || media.filename || `Mídia ${i + 1}`;
+                            
+                            console.log(`🔍 Processando mídia ${i + 1}/${playlist.length}:`, {
+                                filename: media.filename,
+                                name: media.name,
+                                type: media.type,
+                                duration: media.duration,
+                                url: mediaUrl
+                            });
+                            
+                            try {
+                                updateLoadingProgress(i, playlist.length, `Carregando: ${mediaName}`);
+                                
+                                // Testa se o arquivo existe primeiro
+                                const fileExists = await testFileExists(mediaUrl);
+                                if (!fileExists) {
+                                    console.error(`❌ Arquivo não encontrado: ${mediaUrl}`);
+                                    preloadedVideos.push(null);
+                                    continue;
+                                }
+                                
+                                const preloadedVideo = await preloadVideo(mediaUrl, mediaName);
+                                preloadedVideos.push(preloadedVideo);
+                                updateLoadingProgress(i + 1, playlist.length, `Carregado: ${mediaName}`);
+                            } catch (error) {
+                                console.error(`Erro ao carregar ${mediaName}:`, error);
+                                // Continua mesmo com erro
+                                preloadedVideos.push(null);
+                            }
+                        }
+                        
+                        updateLoadingProgress(playlist.length, playlist.length, 'Carregamento concluído!');
+                        
+                        setTimeout(() => {
+                            showLoadingDiv(false);
+                            console.log(`🎬 Todas as mídias carregadas! Iniciando reprodução...`);
+                            startPlayback();
+                        }, 1000);
+                    }
+
+                    // Função para carregar e reproduzir vídeos na tela
+                    function loadVideo(index) {
+                        console.log(`🔍 DEBUG loadVideo - Iniciando com índice: ${index}`);
+                        console.log(`🔍 DEBUG loadVideo - preloadedVideos.length: ${preloadedVideos.length}`);
+                        console.log(`🔍 DEBUG loadVideo - playlist.length: ${playlist.length}`);
+                        
+                        if (preloadedVideos.length === 0) {
+                            console.log('❌ Vídeos não foram pré-carregados ainda...');
+                            return;
+                        }
+
+                        const preloadedVideo = preloadedVideos[index];
+                        console.log(`🔍 DEBUG loadVideo - preloadedVideo:`, preloadedVideo);
+                        
+                        if (!preloadedVideo) {
+                            console.log(`❌ Vídeo pré-carregado não encontrado no índice: ${index}`);
+                            return;
+                        }
+
+                        const media = playlist[index];
+                        console.log(`🔍 DEBUG loadVideo - media:`, media);
+                        console.log(`▶️ Reproduzindo mídia ${index + 1}/${playlist.length}:`, media.name || media.filename);
+                        
+                        // Verifica o estado atual do player
+                        console.log(`🔍 DEBUG player - readyState: ${player.readyState}`);
+                        console.log(`🔍 DEBUG player - networkState: ${player.networkState}`);
+                        console.log(`🔍 DEBUG player - paused: ${player.paused}`);
+                        console.log(`🔍 DEBUG player - currentSrc antes: ${player.currentSrc}`);
+                        
+                        // Configurações específicas para Windows para evitar travamentos
+                        player.preload = "auto";
+                        player.setAttribute('webkit-playsinline', 'true');
+                        player.setAttribute('playsinline', 'true');
+                        
+                        // Copia o vídeo pré-carregado para o player principal
+                        player.src = preloadedVideo.src;
+                        console.log(`🔍 DEBUG player - src definido como: ${player.src}`);
+                        
+                        // Aplicar orientação baseada no formato do dispositivo e da mídia
+                        const deviceFormat = window.deviceFormat || 'HORIZONTAL';
+                        const mediaOrientation = preloadedVideo.mediaOrientation || 'horizontal';
+                        
+                        // Remove classes anteriores
+                        player.classList.remove('vertical-media', 'horizontal-media');
+                        
+                        // Aplica classe baseada na orientação da mídia
+                        if (mediaOrientation === 'vertical') {
+                            player.classList.add('vertical-media');
+                        } else {
+                            player.classList.add('horizontal-media');
+                        }
+                        
+                        console.log(`🔄 Aplicando orientação: Device=${deviceFormat}, Media=${mediaOrientation}`);
+                        
+                        // Força o carregamento do vídeo
+                        player.load();
+                        
+                        player.currentTime = 0;
+                        console.log(`🔍 DEBUG player - currentTime resetado para: ${player.currentTime}`);
+                        
+                        // Mostra o player antes de tentar reproduzir
+                        player.style.display = "block";
+                        console.log(`🔍 DEBUG player - display definido como: ${player.style.display}`);
+                        
+                        // Adiciona listeners para detectar travamentos no Windows
+                        const handleStalled = () => {
+                            console.log('⚠️ Vídeo travado, tentando recuperar...');
+                            player.load();
+                            setTimeout(() => player.play().catch(console.error), 100);
+                        };
+                        
+                        const handleWaiting = () => {
+                            console.log('⏳ Vídeo aguardando buffer...');
+                        };
+                        
+                        player.addEventListener('stalled', handleStalled, { once: true });
+                        player.addEventListener('waiting', handleWaiting, { once: true });
+                        
+                        console.log(`🔍 DEBUG player - load() chamado`);
+                        
+                        // Aguarda um pouco antes de tentar reproduzir
+                        setTimeout(() => {
+                            console.log(`🎬 Tentando reproduzir: ${media.name || media.filename}`);
+                            console.log(`🔍 DEBUG player - readyState após load: ${player.readyState}`);
+                            
+                            const playPromise = player.play();
+                            
+                            if (playPromise !== undefined) {
+                                playPromise.then(() => {
+                                    console.log(`✅ Reprodução iniciada com sucesso: ${media.name || media.filename}`);
+                                }).catch(err => {
+                                    console.error(`❌ Erro no autoplay de ${media.name || media.filename}:`, err);
+                                    console.error(`❌ Tipo do erro:`, err.name);
+                                    console.error(`❌ Mensagem do erro:`, err.message);
+                                    
+                                    // Tenta reproduzir sem som como fallback
+                                    console.log(`🔄 Tentando fallback com muted...`);
+                                    player.muted = true;
+                                    const mutedPlayPromise = player.play();
+                                    
+                                    if (mutedPlayPromise !== undefined) {
+                                        mutedPlayPromise.catch(err2 => {
+                                            console.error(`❌ Erro mesmo com muted:`, err2);
+                                            console.error(`❌ Tipo do erro muted:`, err2.name);
+                                            console.error(`❌ Mensagem do erro muted:`, err2.message);
+                                        });
+                                    }
+                                });
+                            } else {
+                                console.log(`⚠️ play() não retornou uma Promise`);
+                            }
+                        }, 100);
+                    }
+
+                    // Função para iniciar a reprodução após pré-carregamento
+                    function startPlayback() {
+                        if (preloadedVideos.length > 0) {
+                            console.log('🎬 Iniciando reprodução automática da playlist...');
+                            currentIndex = 0;
+                            
+                            // Inicia reprodução automática imediatamente
+                            setTimeout(() => {
+                                console.log('🔄 Iniciando reprodução automática...');
+                                loadVideo(currentIndex);
+                            }, 500);
+                        } else {
+                            console.error('❌ Nenhum vídeo pré-carregado disponível para reprodução');
+                        }
+                    }
+
+                    // Função para inicializar a playlist com dados da API
+                    function initializePlaylist(medias) {
+                        console.log('🔍 Debug - Dados recebidos da API:', medias);
+                        
+                        // Filtra apenas vídeos da lista de mídias e extrai filename da URL
+                        playlist = medias.filter(media => media.type === 'VIDEO').map(media => {
+                            // Extrai o filename da URL completa
+                            const urlParts = media.url.split('/');
+                            const filename = urlParts[urlParts.length - 1];
+                            
+                            return {
+                                ...media,
+                                filename: filename,
+                                name: media.title || media.name || filename
+                            };
+                        });
+                        
+                        console.log(`📋 Playlist inicializada com ${playlist.length} vídeo(s):`);
+                        playlist.forEach((media, index) => {
+                            console.log(`🔍 Debug - Mídia ${index + 1}:`, media);
+                            console.log(`${index + 1}. Nome: ${media.name} | Arquivo: ${media.filename} | Duração: ${media.duration}s`);
+                        });
+
+                        // Inicia o pré-carregamento se houver vídeos
+                        if (playlist.length > 0) {
+                            preloadAllVideos();
+                        } else {
+                            console.log('❌ Nenhum vídeo encontrado na playlist');
+                        }
+                    }
+
+                    // Event listener removido - o player será mostrado diretamente na função loadVideo
+
+                    // Quando acabar, passa para o próximo
+                    player.addEventListener("ended", () => {
+                        console.log(`🔄 Vídeo ${currentIndex + 1} terminou, passando para o próximo...`);
+                        currentIndex = (currentIndex + 1) % playlist.length; // volta pro primeiro no fim
+                        console.log(`➡️ Próximo vídeo: índice ${currentIndex + 1}/${playlist.length}`);
+                        loadVideo(currentIndex);
+                    });
+                    
+                    // Adiciona listener para monitorar o tempo do vídeo
+                    player.addEventListener("timeupdate", () => {
+                        const media = playlist[currentIndex];
+                        if (media && media.duration) {
+                            // Se o vídeo passou do tempo definido na API, passa para o próximo
+                            if (player.currentTime >= media.duration) {
+                                console.log(`⏰ Tempo limite atingido (${media.duration}s), passando para próximo vídeo...`);
+                                player.currentTime = 0;
+                                currentIndex = (currentIndex + 1) % playlist.length;
+                                loadVideo(currentIndex);
+                            }
+                        }
+                    });
+                    
+                    // Adiciona listener para quando o vídeo está pronto para reproduzir
+                    player.addEventListener("canplay", () => {
+                        console.log(`✅ Vídeo ${currentIndex + 1} está pronto para reproduzir`);
+                    });
+                    
+                    // Adiciona listener para quando o vídeo começa a reproduzir
+                    player.addEventListener("playing", () => {
+                        console.log(`▶️ Vídeo ${currentIndex + 1} está reproduzindo`);
+                    });
+                    
+                    // Adiciona listener para quando o vídeo pausa
+                    player.addEventListener("pause", () => {
+                        console.log(`⏸️ Vídeo ${currentIndex + 1} foi pausado`);
+                    });
+                    
+                    // Adiciona listener para erros durante a reprodução
+                    player.addEventListener("error", (e) => {
+                        console.error(`❌ Erro durante reprodução do vídeo ${currentIndex + 1}:`, e);
+                        console.error(`❌ Detalhes do erro:`, player.error);
+                        // Tenta passar para o próximo vídeo em caso de erro
+                        setTimeout(() => {
+                            currentIndex = (currentIndex + 1) % playlist.length;
+                            loadVideo(currentIndex);
+                        }, 1000);
+                    });
+
+                    // Função para reiniciar a playlist (útil para atualizações)
+                    function restartPlaylist() {
+                        if (preloadedVideos.length > 0) {
+                            currentIndex = 0;
+                            loadVideo(currentIndex);
+                        }
+                    }
+                </script>
+
+
+            </div>
+            <div class="inferior">
+                <span style="color: aliceblue;">ANUNCIE AQUI</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+
+        // Função para gerar fingerprint único do navegador
+        function generateBrowserFingerprint() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('Browser fingerprint', 2, 2);
+
+            const fingerprint = [
+                navigator.userAgent,
+                navigator.language,
+                screen.width + 'x' + screen.height,
+                screen.colorDepth,
+                new Date().getTimezoneOffset(),
+                canvas.toDataURL()
+            ].join('|');
+
+            return fingerprint;
+        }
+
+        // Função para converter string em hash simples
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return Math.abs(hash);
+        }
+
+        // Função para gerar chave única e imutável por navegador
+        function generateUniqueKey() {
+            // Primeiro tenta recuperar do localStorage
+            let deviceKey = localStorage.getItem('vix_device_key');
+
+            if (!deviceKey) {
+                // Se não existe, gera baseado no fingerprint do navegador
+                const fingerprint = generateBrowserFingerprint();
+                const hash = simpleHash(fingerprint);
+
+                // Converte hash em chave de 6 caracteres
+                const characters = 'ABCDEF123456789';
+                let key = '';
+                let tempHash = hash;
+
+                for (let i = 0; i < 6; i++) {
+                    key += characters.charAt(tempHash % characters.length);
+                    tempHash = Math.floor(tempHash / characters.length);
+                }
+
+                deviceKey = key;
+
+                // Salva no localStorage para persistência
+                localStorage.setItem('vix_device_key', deviceKey);
+                console.log('Nova chave gerada e salva:', deviceKey);
+            } else {
+                console.log('Chave recuperada do localStorage:', deviceKey);
+            }
+
+            return deviceKey;
+        }
+
+        // Função para exibir a chave na div
+        function displayKey() {
+            const key = generateUniqueKey();
+            const keyBox = document.getElementById('keyRegistrationBox');
+            keyBox.innerHTML = `
+                <h2>Chave de Registro do Dispositivo</h2>
+                <div style="font-size: 24px; font-weight: bold; color: #007bff; margin: 20px 0; letter-spacing: 2px;">${key}</div>
+                <p>Use esta chave para registrar o dispositivo no sistema</p>
+                <small style="color: #666; font-size: 12px;">Esta chave é única e permanente para este navegador</small>
+            `;
+        }
+
+        // Função para verificar chave na API
+        async function checkDeviceKey(deviceKey) {
+            try {
+                const apiUrl = `${DISPLAY_CONFIG.API_BASE_URL}/public/device/${deviceKey}`;
+                console.log('Verificando chave na API:', apiUrl);
+
+                const response = await fetch(apiUrl);
+                console.log('Status da resposta:', response.status);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Dados recebidos da API:', data);
+                    return { found: true, data: data };
+                } else {
+                    console.log('Chave não encontrada na API');
+                    return { found: false, data: null };
+                }
+            } catch (error) {
+                console.error('Erro ao verificar chave na API:', error);
+                return { found: false, data: null };
+            }
+        }
+
+        // Função para controlar visibilidade das divs
+        function toggleDisplays(showPlayer) {
+            const keyContainer = document.getElementById('keyRegistrationContainer');
+            const mediaContainer = document.getElementById('mediaPlayContainer');
+            const loadingContainer = document.getElementById('carregandoMidias');
+
+            if (showPlayer) {
+                // Chave encontrada - ocultar registro e loading, mostrar player
+                keyContainer.style.display = 'none';
+                loadingContainer.style.display = 'none';
+                mediaContainer.style.display = 'flex';
+                console.log('Chave encontrada - exibindo player');
+            } else {
+                // Chave não encontrada - mostrar registro, ocultar player e loading
+                keyContainer.style.display = 'flex';
+                mediaContainer.style.display = 'none';
+                loadingContainer.style.display = 'none';
+                console.log('Chave não encontrada - exibindo registro');
+            }
+        }
+
+        // Função para configurar layout baseado no formato do dispositivo
+        function configureDeviceLayout(deviceFormat) {
+            const container = document.querySelector('.container');
+            const body = document.body;
+
+            console.log(`🖥️ Configurando layout para formato: ${deviceFormat}`);
+
+            // Remove classes anteriores
+            container.classList.remove('vertical', 'horizontal');
+            body.classList.remove('device-vertical', 'device-horizontal');
+
+            if (deviceFormat === 'VERTICAL') {
+                // Layout vertical: mídias "em pé"
+                container.classList.add('vertical');
+                body.classList.add('device-vertical');
+                console.log('📱 Layout configurado para VERTICAL (mídias em pé)');
+            } else {
+                // Layout horizontal: mídias "deitadas" (padrão)
+                container.classList.add('horizontal');
+                body.classList.add('device-horizontal');
+                console.log('🖥️ Layout configurado para HORIZONTAL (mídias deitadas)');
+            }
+
+            // Armazenar formato do dispositivo para uso posterior
+            window.deviceFormat = deviceFormat;
+        }
+
+        // Função principal para inicializar a aplicação
+        async function initializeApp() {
+            const deviceKey = generateUniqueKey();
+
+            // Primeiro exibe a chave
+            displayKey();
+
+            // Depois verifica na API
+            const result = await checkDeviceKey(deviceKey);
+
+            // Se o dispositivo foi encontrado, armazena os dados
+            if (result.found && result.data) {
+                console.log('📱 Dados do dispositivo:', result.data.device);
+                console.log('📺 Dados do painel:', result.data.panel);
+
+                // Armazena os dados do dispositivo globalmente para uso posterior
+                window.deviceData = result.data.device;
+                window.panelData = result.data.panel;
+
+                console.log(`✅ Dispositivo "${result.data.device.name}" conectado com sucesso!`);
+                console.log(`📋 Painel: "${result.data.panel.name}" com ${result.data.panel.medias.length} mídia(s)`);
+
+                // Configurar layout baseado no formato do dispositivo
+                const deviceFormat = result.data.device.format || 'HORIZONTAL';
+                configureDeviceLayout(deviceFormat);
+
+                // Inicializar playlist com os dados das mídias da API
+                if (result.data.panel && result.data.panel.medias) {
+                    console.log('🎬 Inicializando playlist com dados da API...');
+                    initializePlaylist(result.data.panel.medias);
+                } else {
+                    console.log('⚠️ Nenhuma mídia encontrada no painel');
+                }
+            }
+
+            // Controla a visibilidade das divs baseado no resultado
+            toggleDisplays(result.found);
+        }
+
+        // Executar quando a página carregar
+        window.addEventListener('load', initializeApp);
+
+
+    </script>
+</body>
+
+</html>

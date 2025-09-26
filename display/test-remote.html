@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Acesso Remoto - VixMídia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: white;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-item {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+        video {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        .success { background-color: #2d5a2d; }
+        .error { background-color: #5a2d2d; }
+        .info { background-color: #2d4a5a; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Teste de Acesso Remoto - VixMídia</h1>
+        
+        <div class="test-item">
+            <h3>1. Informações da Conexão</h3>
+            <div id="connection-info" class="status info">
+                <p><strong>URL Atual:</strong> <span id="current-url"></span></p>
+                <p><strong>IP do Servidor:</strong> 192.168.0.120:4000</p>
+                <p><strong>User Agent:</strong> <span id="user-agent"></span></p>
+            </div>
+        </div>
+
+        <div class="test-item">
+            <h3>2. Teste de API</h3>
+            <button onclick="testApi()">Testar Conexão com API</button>
+            <div id="api-result" class="status info">Clique no botão para testar</div>
+        </div>
+
+        <div class="test-item">
+            <h3>3. Teste de Arquivo de Mídia</h3>
+            <button onclick="testMediaFile()">Testar Acesso ao Arquivo</button>
+            <div id="media-result" class="status info">Clique no botão para testar</div>
+        </div>
+
+        <div class="test-item">
+            <h3>4. Teste de Reprodução de Vídeo</h3>
+            <button onclick="testVideoPlayback()">Carregar Vídeo de Teste</button>
+            <div id="video-container">
+                <video id="test-video" controls muted>
+                    Seu navegador não suporta o elemento de vídeo.
+                </video>
+            </div>
+            <div id="video-result" class="status info">Clique no botão para testar</div>
+        </div>
+
+        <div class="test-item">
+            <h3>5. Lista de Arquivos Disponíveis</h3>
+            <button onclick="listMediaFiles()">Listar Arquivos</button>
+            <div id="files-list" class="status info">Clique no botão para listar</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuração
+        const API_BASE = 'http://192.168.0.120:3000';
+        const MEDIA_BASE = 'http://192.168.0.120:3000/vix-midia/uploads';
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('current-url').textContent = window.location.href;
+            document.getElementById('user-agent').textContent = navigator.userAgent;
+        });
+
+        // Teste de API
+        async function testApi() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.textContent = 'Testando conexão...';
+            resultDiv.className = 'status info';
+
+            try {
+                const response = await fetch(`${API_BASE}/public/device/check-device`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ test: true })
+                });
+
+                if (response.ok) {
+                    resultDiv.textContent = `✅ API acessível! Status: ${response.status}`;
+                    resultDiv.className = 'status success';
+                } else {
+                    resultDiv.textContent = `⚠️ API respondeu com erro: ${response.status}`;
+                    resultDiv.className = 'status error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro ao conectar com API: ${error.message}`;
+                resultDiv.className = 'status error';
+            }
+        }
+
+        // Teste de arquivo de mídia
+        async function testMediaFile() {
+            const resultDiv = document.getElementById('media-result');
+            resultDiv.textContent = 'Testando acesso ao arquivo...';
+            resultDiv.className = 'status info';
+
+            const testFile = `${MEDIA_BASE}/cl.mp4`;
+
+            try {
+                const response = await fetch(testFile, { method: 'HEAD' });
+                
+                if (response.ok) {
+                    const size = response.headers.get('content-length');
+                    const type = response.headers.get('content-type');
+                    resultDiv.innerHTML = `✅ Arquivo acessível!<br>Tamanho: ${size ? (size/1024/1024).toFixed(2) + ' MB' : 'N/A'}<br>Tipo: ${type || 'N/A'}`;
+                    resultDiv.className = 'status success';
+                } else {
+                    resultDiv.textContent = `❌ Arquivo não acessível: ${response.status}`;
+                    resultDiv.className = 'status error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ Erro ao acessar arquivo: ${error.message}`;
+                resultDiv.className = 'status error';
+            }
+        }
+
+        // Teste de reprodução de vídeo
+        function testVideoPlayback() {
+            const resultDiv = document.getElementById('video-result');
+            const video = document.getElementById('test-video');
+            
+            resultDiv.textContent = 'Carregando vídeo...';
+            resultDiv.className = 'status info';
+
+            const testVideoUrl = `${MEDIA_BASE}/cl.mp4`;
+            video.src = testVideoUrl;
+
+            video.addEventListener('loadedmetadata', function() {
+                resultDiv.innerHTML = `✅ Vídeo carregado!<br>Duração: ${video.duration.toFixed(2)}s<br>Dimensões: ${video.videoWidth}x${video.videoHeight}`;
+                resultDiv.className = 'status success';
+            });
+
+            video.addEventListener('error', function(e) {
+                resultDiv.textContent = `❌ Erro ao carregar vídeo: ${e.target.error?.message || 'Erro desconhecido'}`;
+                resultDiv.className = 'status error';
+            });
+
+            video.load();
+        }
+
+        // Listar arquivos de mídia
+        async function listMediaFiles() {
+            const resultDiv = document.getElementById('files-list');
+            resultDiv.textContent = 'Buscando lista de arquivos...';
+            resultDiv.className = 'status info';
+
+            // Lista de arquivos conhecidos para teste
+            const knownFiles = ['cl.mp4', 'cl2.mp4', 'pa.mp4', 'pa2.mp4'];
+            let results = [];
+
+            for (const file of knownFiles) {
+                try {
+                    const response = await fetch(`${MEDIA_BASE}/${file}`, { method: 'HEAD' });
+                    const status = response.ok ? '✅' : '❌';
+                    const size = response.headers.get('content-length');
+                    results.push(`${status} ${file} ${size ? '(' + (size/1024/1024).toFixed(2) + ' MB)' : ''}`);
+                } catch (error) {
+                    results.push(`❌ ${file} (Erro: ${error.message})`);
+                }
+            }
+
+            resultDiv.innerHTML = results.join('<br>');
+            resultDiv.className = 'status info';
+        }
+    </script>
+</body>
+</html>

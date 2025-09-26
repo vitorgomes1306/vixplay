@@ -23,6 +23,8 @@ app.use('/vix-midia', express.static(path.join(process.cwd(), 'vix-midia')));
 // Adicionar esta linha para servir arquivos estáticos
 app.use('/public', express.static('public'));
 
+app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
+
 // Montar rotas públicas (Não requerem autenticação)
 app.use('/public', publicRoutes);          // Rotas públicas principais
 

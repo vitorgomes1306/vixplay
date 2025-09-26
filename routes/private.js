@@ -1060,12 +1060,15 @@ router.put("/painel/:panelId/config", authenticateToken, async (req, res) => {
 });
 //_______________________________________________________________________
 
+// Rota para leitura das midias no CRUD de midias
 router.get("/panel/:panelId/midias", authenticateToken, async (req, res) => {
   try {
     const panelId = parseInt(req.params.panelId);
 
-    const midias = await prisma.media.findMany({
-      where: { panelId },
+    const midias = await prisma.medias.findMany({
+      where: {
+        panelId: panelId // Filtrar diretamente pelo panelId
+      },
       orderBy: { createdAt: "asc" }, // Ordena por data de criação
     });
 
@@ -1102,7 +1105,7 @@ router.get("/panel/:id/midias", authenticateToken, async (req, res) => {
     }
 
     // Buscar todas as mídias associadas ao painel
-    const midias = await prisma.media.findMany({
+    const midias = await prisma.medias.findMany({
       where: {
         panelId: panelId, // ✅ Filtrar pelo panelId diretamente
       },
@@ -1183,7 +1186,7 @@ import auth from "../middlewares/auth.js";
 // Rota para atualizar paineis
 router.put("/device/:id", authenticateToken, async (req, res) => {
   const { id } = req.params; // ID do dispositivo enviado via URL
-  const { name, panelId, type, status, local } = req.body; // Dados enviados para atualização
+  const { name, panelId, type, status, local, sendNotification, showClientInfo } = req.body; // Dados enviados para atualização
   const userId = req.userId; // ID do usuário autenticado (obtido no middleware)
   const format = req.body.format || "Horizontal"; // Formato do dispositivo, padrão é 'Horizontal'
   const geoLocation = req.body.geoLocation || null; // Localização geográfica, padrão é null
@@ -1237,7 +1240,9 @@ router.put("/device/:id", authenticateToken, async (req, res) => {
         status: status || device.status,
         panelId: panelId || device.panelId,
         format: format || device.format,
-        geoLocation: geoLocation || device.geoLocation, // Atualiza a localização geográfica
+        geoLocation: geoLocation || device.geoLocation,
+        sendNotification: sendNotification !== undefined ? sendNotification : device.sendNotification,
+        showClientInfo: showClientInfo !== undefined ? showClientInfo : device.showClientInfo,
         updatedAt: new Date(),
       },
     });
@@ -1304,7 +1309,7 @@ import fs from "fs";
 // Configuração do multer
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = "./vix-midia/uploads"; // Corrigido para caminho local
+    const uploadPath = "./public/uploads"; // Caminho para pasta pública
 
     // Criar diretório se não existir
     if (!fs.existsSync(uploadPath)) {
@@ -1408,19 +1413,19 @@ router.post("/uploadmidia", upload.single("file"), async (req, res) => {
     console.log("Tipo de mídia mapeado:", type);
 
     // Corrige o caminho guardado na URL
-    const relativeFilePath = `/vix-midia/uploads/${req.file.filename}`;
+    const relativeFilePath = `/uploads/${req.file.filename}`;
     const publicUrl = `${process.env.BASE_URL || 'http://localhost:4000'}${relativeFilePath}`;
 
     console.log("URL pública gerada:", publicUrl);
 
     // Salvar no banco de dados
-    const media = await prisma.media.create({
+    const media = await prisma.medias.create({
       data: {
         title: title || null,
         url: publicUrl, // Salva no banco a URL pública final
         type: type, // Tipo traduzido para o enum do Prisma
         duration: parseInt(duration, 10),
-        panelId: parseInt(panelId, 10),
+        panelId: parseInt(panelId, 10)
       },
     });
 
@@ -1465,7 +1470,7 @@ router.post("/addmidia", authenticateToken, async (req, res) => {
     console.log("Dados tratados para criação:", midiaData);
 
     // Adiciona a mídia ao banco de dados
-    const novaMidia = await prisma.media.create({
+    const novaMidia = await prisma.medias.create({
       data: midiaData,
     });
 
@@ -1489,7 +1494,7 @@ router.get("/midia/:id", authenticateToken, async (req, res) => {
     console.log("Buscando mídia:", midiaId);
 
     // Inclui o campo `duration` ao carregar os dados da mídia
-    const midia = await prisma.media.findUnique({
+    const midia = await prisma.medias.findUnique({
       where: { id: midiaId },
       select: {
         id: true,
@@ -1521,7 +1526,7 @@ router.put("/midia/:id", authenticateToken, async (req, res) => {
   try {
     console.log("Atualizando mídia:", id);
 
-    const updatedMidia = await prisma.media.update({
+    const updatedMidia = await prisma.medias.update({
       where: { id: parseInt(id) },
       data: {
         title: title || undefined,
@@ -1554,11 +1559,11 @@ router.delete("/midia/:id", authenticateToken, async (req, res) => {
     console.log("Excluindo mídia:", midiaId);
 
     // Verificar se a mídia existe
-    const midiaExistente = await prisma.media.findUnique({
+    const midiaExistente = await prisma.medias.findUnique({
       where: { id: midiaId },
       include: {
-        PanelMedia: true, // Certo: Incluído corretamente o relacionamento intermediário
-        panel: true, // Esse relacionamento existe diretamente no modelo
+        PanelMedias: true, // Corrigido: relacionamento correto
+        panel: true, // Relacionamento direto com painel
       },
     });
 
@@ -1590,7 +1595,7 @@ router.delete("/midia/:id", authenticateToken, async (req, res) => {
       }
     }
 
-    // Primeiro, remover as associações com painéis (tabela intermediária PanelMedia)
+    // Primeiro, remover as associações com painéis (tabela intermediária PanelMedias)
     await prisma.panelMedia.deleteMany({
       where: { mediaId: midiaId },
     });
@@ -1598,7 +1603,7 @@ router.delete("/midia/:id", authenticateToken, async (req, res) => {
     console.log("🔗 Associações com painéis removidas.");
 
     // Depois, remover a mídia
-    await prisma.media.delete({
+    await prisma.medias.delete({
       where: { id: midiaId },
     });
 
@@ -1683,7 +1688,7 @@ router.post("/device", authenticateToken, async (req, res) => {
     console.log("🏷️ type recebido:", req.body.type);
     // console.log('📍 local recebido:', req.body.local); // ✅ NOVO LOG
 
-    const { name, deviceKey, panelId, type, format, geoLocation } = req.body; // ✅ ADICIONADO local
+    const { name, deviceKey, panelId, type, format, geoLocation, sendNotification, showClientInfo } = req.body;
 
     // 🔍 VERIFICAR SE A DESESTRUTURAÇÃO FUNCIONOU
     console.log("🔍 Após desestruturação:");
@@ -1747,7 +1752,7 @@ router.post("/device", authenticateToken, async (req, res) => {
         });
     }
 
-    // 🔍 LOG ANTES DE CRIAR (COM local)
+    // 🔍 LOG ANTES DE CRIAR
     const dadosParaCriar = {
       name: name.trim(),
       deviceKey: deviceKey.trim().toUpperCase(),
@@ -1755,8 +1760,9 @@ router.post("/device", authenticateToken, async (req, res) => {
       type: type || "TV",
       status: "Ativo",
       format: format || "Horizontal",
-      geoLocation: geoLocation || null, // ✅ NOVO CAMPO
-      // local: local || null // ✅ NOVO CAMPO
+      geoLocation: geoLocation || null,
+      sendNotification: sendNotification !== undefined ? sendNotification : false,
+      showClientInfo: showClientInfo !== undefined ? showClientInfo : false
     };
 
     console.log(
@@ -1803,7 +1809,7 @@ router.put("/device/:id", auth, async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { name, panelId, type, status, local } = req.body;
+    const { name, panelId, type, status, local, sendNotification, showClientInfo } = req.body;
     const userId = req.userId;
 
     console.log("=== ATUALIZANDO DISPOSITIVO ===");
@@ -1839,13 +1845,14 @@ router.put("/device/:id", auth, async (req, res) => {
       }
     }
 
-    // ✅ STEP 3: Preparando dados SEM o campo 'local'
+    // ✅ STEP 3: Preparando dados para atualização
     console.log("🔍 STEP 3: Preparando dados para atualização...");
     const dadosAtualizacao = {
       name: name?.trim(),
       type: type,
       status: status,
-      // ❌ Removido 'local' porque não existe no schema
+      sendNotification: sendNotification !== undefined ? sendNotification : deviceExistente.sendNotification,
+      showClientInfo: showClientInfo !== undefined ? showClientInfo : deviceExistente.showClientInfo,
     };
 
     // Se panelId foi fornecido, usar a relação Panel
@@ -2064,16 +2071,16 @@ router.get("/painel/:id/midias", async (req, res) => {
       console.log("📋 Dados do painel:", painelExiste);
     }
 
-    // ✅ Buscar todas as relações PanelMedia para este painel - CORRIGIDO
-    console.log("🔍 Buscando relações PanelMedia...");
+    // ✅ Buscar todas as relações PanelMedias para este painel - CORRIGIDO
+    console.log("🔍 Buscando relações PanelMedias...");
     const panelMedias = await prisma.panelMedia.findMany({
       where: {
         panelId: parseInt(id),
       },
       include: {
-        Media: true, // ✅ Maiúsculo
-        Panel: {
-          // ✅ Maiúsculo
+        media: true, // ✅ Relacionamento com medias
+        panel: {
+          // ✅ Relacionamento com panel
           select: {
             id: true,
             name: true,
@@ -2097,13 +2104,13 @@ router.get("/painel/:id/midias", async (req, res) => {
 
     // ✅ Mapear as mídias - CORRIGIDO
     const midias = panelMedias.map((pm, index) => {
-      console.log(`📋 Processando mídia ${index + 1}:`, pm.Media); // ✅ Maiúsculo
+      console.log(`📋 Processando mídia ${index + 1}:`, pm.media); // ✅ Relacionamento com medias
       return {
-        id: pm.Media.id, // ✅ Maiúsculo
-        title: pm.Media.title, // ✅ Maiúsculo
-        url: pm.Media.url, // ✅ Maiúsculo
-        type: pm.Media.type, // ✅ Maiúsculo
-        duration: pm.Media.type === "PHOTO" ? 10000 : null,
+        id: pm.media.id, // ✅ Relacionamento com medias
+        title: pm.media.title, // ✅ Relacionamento com medias
+        url: pm.media.url, // ✅ Relacionamento com medias
+        type: pm.media.type, // ✅ Relacionamento com medias
+        duration: pm.media.type === "PHOTO" ? 10000 : null,
         order: index + 1,
       };
     });
@@ -2112,8 +2119,8 @@ router.get("/painel/:id/midias", async (req, res) => {
     console.log("📋 Mídias finais:", JSON.stringify(midias, null, 2));
 
     const resposta = {
-      panelId: panelMedias[0].Panel.id, // ✅ Maiúsculo
-      panelName: panelMedias[0].Panel.name, // ✅ Maiúsculo
+      panelId: panelMedias[0].panel.id, // ✅ Relacionamento com panel
+      panelName: panelMedias[0].panel.name, // ✅ Relacionamento com panel
       midias: midias,
     };
 
@@ -2139,13 +2146,13 @@ router.get("/debug/painel/:id", async (req, res) => {
     });
 
     // Verificar todas as mídias
-    const todasMidias = await prisma.media.findMany();
+    const todasMidias = await prisma.medias.findMany();
 
-    // Verificar todas as relações PanelMedia - ✅ CORRIGIDO
+    // Verificar todas as relações PanelMedias - ✅ CORRIGIDO
     const todasRelacoes = await prisma.panelMedia.findMany({
       include: {
-        Media: true, // ✅ Maiúsculo
-        Panel: true, // ✅ Maiúsculo
+        media: true, // ✅ Relacionamento com medias
+        panel: true, // ✅ Relacionamento com panel
       },
     });
 
@@ -2153,8 +2160,8 @@ router.get("/debug/painel/:id", async (req, res) => {
     const relacoesPainel = await prisma.panelMedia.findMany({
       where: { panelId: parseInt(id) },
       include: {
-        Media: true, // ✅ Maiúsculo
-        Panel: true, // ✅ Maiúsculo
+        media: true, // ✅ Relacionamento com medias
+        panel: true, // ✅ Relacionamento com panel
       },
     });
 
@@ -2250,7 +2257,7 @@ router.get("/medias", authenticateToken, async (req, res) => {
     console.log("=== BUSCANDO TODAS AS MIDIAS ===");
     const userId = req.user.id; // Obtém o ID do usuário do token autenticado
 
-    const medias = await prisma.media.findMany({
+    const medias = await prisma.medias.findMany({
       where: {
         panel: {
           // <--- Acesso a relação 'panel' da Mídia
@@ -2665,7 +2672,7 @@ router.get("/admin/stats", authenticateToken, requireAdmin, async (req, res) => 
       prisma.user.count(),
       prisma.panel.count(),
       prisma.device.count(),
-      prisma.media.count(),
+      prisma.medias.count(),
       prisma.clients.count(),
       prisma.campaign.count(),
       prisma.device.count({ where: { statusDevice: true } })
@@ -2746,7 +2753,7 @@ router.delete("/admin/bulk-delete/devices", authenticateToken, requireAdmin, asy
 router.delete("/admin/bulk-delete/medias", authenticateToken, requireAdmin, async (req, res) => {
   try {
     // Primeiro, buscar todas as mídias para excluir os arquivos físicos
-    const medias = await prisma.media.findMany();
+    const medias = await prisma.medias.findMany();
     
     // Excluir arquivos físicos
     for (const media of medias) {
@@ -2760,7 +2767,7 @@ router.delete("/admin/bulk-delete/medias", authenticateToken, requireAdmin, asyn
     }
     
     // Excluir registros do banco
-    const deletedMedias = await prisma.media.deleteMany({});
+    const deletedMedias = await prisma.medias.deleteMany({});
     
     res.json({
       success: true,
@@ -2925,7 +2932,7 @@ router.delete("/admin/users/:id", authenticateToken, requireAdmin, async (req, r
     const panelIds = userPanels.map(panel => panel.id);
     
     // Buscar todas as mídias dos painéis do usuário para excluir arquivos físicos
-    const userMedias = await prisma.media.findMany({
+    const userMedias = await prisma.medias.findMany({
       where: { panelId: { in: panelIds } }
     });
     
@@ -2943,7 +2950,7 @@ router.delete("/admin/users/:id", authenticateToken, requireAdmin, async (req, r
     // Excluir em cascata: primeiro PanelMedia, depois mídias, dispositivos, painéis e usuário
     if (panelIds.length > 0) {
       await prisma.panelMedia.deleteMany({ where: { panelId: { in: panelIds } } });
-      await prisma.media.deleteMany({ where: { panelId: { in: panelIds } } });
+      await prisma.medias.deleteMany({ where: { panelId: { in: panelIds } } });
     }
     await prisma.device.deleteMany({ where: { panelId: { in: panelIds } } });
     await prisma.customScreen.deleteMany({ where: { userId: userId } });

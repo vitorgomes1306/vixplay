@@ -1,0 +1,167 @@
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Container para exibir a midia */
+#mediaPlayContainer {
+    display: flex;
+}
+
+/* Div carregando midias */
+
+#carregandoMidias{
+
+    display: none;
+}
+/* Container da chave de acesso */
+#keyRegistrationContainer{
+    display: none;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+/* Container para exibir a chave de acesso */
+#keyRegistrationBox {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+}
+
+.superior {
+    background-color: lightblue;
+    height: 90%;
+    flex-grow: 1;
+}
+
+.superior video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+/* Rotação de mídias baseada na orientação do dispositivo */
+/* Mídia vertical em dispositivo horizontal - rotaciona 90 graus */
+body.device-horizontal .superior video.vertical-media {
+    transform: rotate(90deg);
+    width: 100vh;
+    height: 100vw;
+    object-fit: contain;
+}
+
+/* Mídia horizontal em dispositivo vertical */
+body.device-vertical .superior video.horizontal-media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Mídia vertical em dispositivo vertical */
+body.device-vertical .superior video.vertical-media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.inferior {
+    background-color: rgb(5, 0, 0);
+    height: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Layout vertical */
+.container.vertical {
+    flex-direction: row-reverse;
+}
+
+.container.vertical .superior {
+    width: 90%;
+    height: 100%;
+}
+
+.container.vertical .inferior {
+    width: 10%;
+    height: 100%;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+}
+
+/* Layout horizontal baseado no formato do dispositivo */
+body.device-horizontal .container {
+    flex-direction: column;
+}
+
+body.device-horizontal .superior {
+    height: 90%;
+    width: 100%;
+}
+
+body.device-horizontal .inferior {
+    height: 10%;
+    width: 100%;
+    writing-mode: horizontal-tb;
+}
+
+/* Layout para dispositivos VERTICAL */
+body.device-vertical .container {
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+body.device-vertical .superior {
+    width: 100vw;
+    height: 90vh;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+body.device-vertical .inferior {
+    width: 100vw;
+    height: 10vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-size: 1.2rem;
+    text-align: center;
+    overflow: hidden;
+}

@@ -112,35 +112,39 @@ model Panel {
   updatedAt             DateTime  @updatedAt
 
   // Relações existentes
-  medias  PanelMedia[]
+  medias  PanelMedias[]
   devices Device[]
-  Media   Media[]
+  Media   Medias[]
 
   user User @relation(fields: [userId], references: [id])
 
   @@map("Panel")
 }
 
-model Media {
-  id         Int          @id @default(autoincrement())
+model Medias {
+  id         Int           @id @default(autoincrement())
   title      String?
   url        String
   type       MediaType
   duration   Int?
   panelId    Int
-  panel      Panel        @relation(fields: [panelId], references: [id])
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  PanelMedia PanelMedia[]
+  panel      Panel         @relation(fields: [panelId], references: [id])
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  active     Boolean       @default(true)
+  PanelMedias PanelMedias[]
+
+  @@map("Media")
 }
 
-model PanelMedia {
+model PanelMedias {
   panelId Int
   mediaId Int
-  panel   Panel @relation(fields: [panelId], references: [id])
-  media   Media @relation(fields: [mediaId], references: [id])
+  panel   Panel  @relation(fields: [panelId], references: [id])
+  media   Medias @relation(fields: [mediaId], references: [id])
 
   @@id([panelId, mediaId])
+  @@map("PanelMedia")
 }
 
 model Device {
@@ -155,6 +159,11 @@ model Device {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   geoLocation  String?
+  showClientInfo Boolean @default(false)
+  sendNotification Boolean @default(false)
+
+  //ativação da licença do dispositivo com data de inicio e fim
+  licenceActive Boolean @default(false)
 
   panel Panel @relation(fields: [panelId], references: [id])
 

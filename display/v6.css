@@ -1,0 +1,219 @@
+body {
+    background-color: #000;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    /* Desativa o zoom do usuário */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#showKey {
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 48px;
+    font-weight: bold;
+}
+
+#showKey div {
+    text-align: center;
+    padding: 20px;
+}
+
+#showKey h3 {
+    margin: 0 0 20px 0;
+    font-size: 36px;
+    color: #fff;
+}
+
+#showKey p {
+    margin: 10px 0;
+    font-size: 24px;
+}
+
+#showKey p strong {
+    font-size: 48px;
+    color: #00ff00;
+    letter-spacing: 4px;
+    display: block;
+    margin: 20px 0;
+}
+
+#showKey button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 15px 30px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#showKey button:hover {
+    background-color: #0056b3;
+}
+
+#showPlay {
+    /* uma div dividida em duas com 90% pra superio e 10% pra inferior */
+    position: absolute;
+    DISPLAY: flex;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+}
+
+#showPlaySuperior {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 90%;
+    background: #000;
+}
+
+#showPlaySuperior video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: transform;
+    
+    /* Remove controles e ícones de play */
+    outline: none;
+    border: none;
+    background: transparent;
+    
+    /* Remove qualquer ícone de play padrão */
+    -webkit-media-controls: none;
+    -webkit-media-controls-panel: none;
+    -webkit-media-controls-play-button: none;
+    -webkit-media-controls-start-playback-button: none;
+    
+    /* Transições suaves */
+    transition: opacity 0.1s ease;
+    pointer-events: none;
+}
+
+#mainVideo, #bufferVideo {
+    transition: opacity 0.1s ease;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+#mainVideo::-webkit-media-controls,
+#bufferVideo::-webkit-media-controls {
+    display: none !important;
+}
+
+#mainVideo::-webkit-media-controls-panel,
+#bufferVideo::-webkit-media-controls-panel {
+    display: none !important;
+}
+
+#mainVideo::-webkit-media-controls-play-button,
+#bufferVideo::-webkit-media-controls-play-button {
+    display: none !important;
+}
+
+#mainVideo::-webkit-media-controls-start-playback-button,
+#bufferVideo::-webkit-media-controls-start-playback-button {
+    display: none !important;
+}
+
+#showPlayInferior {
+    position: absolute;
+    display: flex;
+    /* 90% PARA A ALTURA */
+    top: 90%;
+    /* =============== */
+    /* 10% DE ALTURA */
+    height: 10%;
+    /*  ============== */
+    left: 0;
+    width: 100%;
+    background-color: #000;
+}
+
+.coluna-esquerda {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30%;
+    height: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.coluna-direita {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70%;
+    height: 100%;
+}
+
+.textoInferior {
+    /* texto alinhado ao centro nos eixos x e y */
+    display: flex;
+    height: 100%;
+    width: 100%;
+    color: #fff;
+    font-size: 20px;
+    line-height: 10%;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Media Queries para dispositivos Android */
+@media screen and (max-width: 768px) {
+    body {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    #showPlaySuperior video {
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@media screen and (orientation: portrait) {
+    #showPlay {
+        flex-direction: column;
+    }
+}
+
+@media screen and (orientation: landscape) {
+    #showPlay {
+        flex-direction: row;
+    }
+    
+    .textoInferior {
+        font-size: 40px;
+    }
+}
+
+/* Otimizações para Android WebView */
+@media screen and (-webkit-min-device-pixel-ratio: 1) {
+    #showPlaySuperior video {
+        -webkit-optimize-contrast: auto;
+    }
+}
