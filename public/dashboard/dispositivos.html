@@ -725,6 +725,23 @@
             window.location.href = "login.html";
         }
 
+       // Função para atualizar a logo do usuário na sidebar (corrigida)
+    function updateUserLogo(avatarUrl) {
+      const sidebarLogo = document.querySelector('.sidebar-header img');
+      if (sidebarLogo && avatarUrl) {
+        sidebarLogo.src = `${avatarUrl}?t=${Date.now()}`;
+        // Preservar a imagem original e centralizá-la
+        sidebarLogo.style.borderRadius = '0'; // Remove o formato circular
+        sidebarLogo.style.width = 'auto'; // Largura automática
+        sidebarLogo.style.height = '60px'; // Altura fixa para manter proporção
+        sidebarLogo.style.maxWidth = '100%'; // Não exceder a largura do container
+        sidebarLogo.style.objectFit = 'contain'; // Manter proporções sem cortar
+        sidebarLogo.style.display = 'block';
+        sidebarLogo.style.margin = '0 auto'; // Centralizar horizontalmente
+        sidebarLogo.style.border = 'none'; // Remove bordas
+        sidebarLogo.style.boxShadow = 'none'; // Remove sombras
+      }
+    }
         // Função para mostrar alertas Bootstrap
         function mostrarAlerta(message, type = 'success') {
             const alertClass = type === 'success' ? 'alert-success' :

@@ -3873,7 +3873,7 @@ router.post('/panels/:panelId/associate-global-media', authenticateToken, async 
       return res.status(400).json({ error: 'Mídia global já está associada a este painel' });
     }
     
-    // Criar a associação
+    // Criar a associação na tabela PanelGlobalMedias
     const association = await prisma.panelGlobalMedias.create({
       data: {
         panelId: parseInt(panelId),
@@ -3881,7 +3881,22 @@ router.post('/panels/:panelId/associate-global-media', authenticateToken, async 
       }
     });
     
-    res.status(201).json({ message: 'Mídia global associada com sucesso', association });
+    // Criar também uma entrada na tabela Medias para que apareça na consulta dos dispositivos
+    const mediaEntry = await prisma.medias.create({
+      data: {
+        title: globalMedia.title,
+        url: globalMedia.url,
+        type: globalMedia.type,
+        duration: globalMedia.duration,
+        panelId: parseInt(panelId)
+      }
+    });
+    
+    res.status(201).json({ 
+      message: 'Mídia global associada com sucesso', 
+      association,
+      mediaEntry 
+    });
   } catch (error) {
     console.error('Erro ao associar mídia global:', error);
     res.status(500).json({ error: 'Erro ao associar mídia global' });
@@ -3905,13 +3920,32 @@ router.delete('/panels/:panelId/disassociate-global-media/:globalMediaId', authe
       return res.status(404).json({ error: 'Painel não encontrado ou não pertence ao usuário' });
     }
     
-    // Remover a associação
+    // Buscar os dados da mídia global para identificar a entrada na tabela Medias
+    const globalMedia = await prisma.globalMedias.findUnique({
+      where: { id: parseInt(globalMediaId) }
+    });
+    
+    if (!globalMedia) {
+      return res.status(404).json({ error: 'Mídia global não encontrada' });
+    }
+    
+    // Remover a associação da tabela PanelGlobalMedias
     await prisma.panelGlobalMedias.delete({
       where: {
         panelId_globalMediaId: {
           panelId: parseInt(panelId),
           globalMediaId: parseInt(globalMediaId)
         }
+      }
+    });
+    
+    // Remover também a entrada correspondente da tabela Medias
+    await prisma.medias.deleteMany({
+      where: {
+        panelId: parseInt(panelId),
+        title: globalMedia.title,
+        url: globalMedia.url,
+        type: globalMedia.type
       }
     });
     

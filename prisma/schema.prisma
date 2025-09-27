@@ -133,6 +133,7 @@ model Medias {
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
   active     Boolean       @default(true)
+  mediaGlobal Boolean       @default(false)
   PanelMedias PanelMedias[]
 
   @@map("Media")

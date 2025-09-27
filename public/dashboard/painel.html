@@ -25,79 +25,91 @@
 
     <div class="wrapper">
         <!-- Sidebar -->
-        <nav class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <img src="../img/vixmidia_dark.png" alt="Logo VixMídia" class="img-fluid">
-                <button class="sidebar-toggle">
-                    <i class="bi bi-chevron-left"></i>
-                </button>
-            </div>
+       <nav class="sidebar d-none d-lg-block" id="sidebar">
+      <div class="sidebar-header">
+        <img src="../img/logo.png" alt="Logo VixMídia" class="img-fluid">
 
-            <ul class="list-unstyled">
-                <li>
-                    <a class="sidebar-link" href="index.html">
-                        <i class="bi bi-speedometer2"></i>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="sidebar-link" href="dispositivos.html">
-                        <i class="bi bi-tv"></i>
-                        <span>Dispositivos</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="sidebar-link active" href="panels.html">
-                        <i class="bi bi-grid-3x3"></i>
-                        <span>Painéis</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="sidebar-link" href="campaigns.html">
-                        <i class="bi bi-megaphone"></i>
-                        <span>Campanhas</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="sidebar-link" href="clients.html">
-                        <i class="bi bi-people"></i>
-                        <span>Clientes</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="sidebar-link" href="relatorios.html">
-                        <i class="bi bi-bar-chart"></i>
-                        <span>Relatórios</span>
-                    </a>
-                </li>
-            </ul>
+      </div>
 
-            <div class="sidebar-footer">
-                <div class="user-info">
-                    <div class="user-avatar">
-                        <i class="bi bi-person-circle"></i>
-                    </div>
-                    <div class="user-details">
-                        <div class="user-name">Usuário</div>
-                        <div class="user-email">usuario@email.com</div>
-                    </div>
-                </div>
-                <button class="btn btn-outline-light btn-sm w-100 mt-2" id="logoutBtn">
-                    <i class="bi bi-box-arrow-right me-1"></i>Sair
-                </button>
+      <ul class="list-unstyled">
+        <li>
+          <a class="sidebar-link active" href="index.html">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="dispositivos.html">
+            <i class="bi bi-tv"></i>
+            <span>Dispositivos</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="panels.html">
+            <i class="bi bi-pip-fill"></i>
+            <span>Painéis</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="midias.html">
+            <i class="bi bi-collection-play"></i>
+            <span>Minhas Mídias</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="midias_globais.html">
+            <i class="bi bi-repeat"></i>
+            <span>Mídias globais</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="clients.html">
+            <i class="bi bi-person-video2"></i>
+            <span>Clientes</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="campaigns.html">
+            <i class="bi bi-megaphone"></i>
+            <span>Campanhas</span>
+          </a>
+        </li>
+        <li>
+          <a class="sidebar-link" href="relatorios.html">
+            <i class="bi bi-clipboard2-pulse"></i>
+            <span>Relatórios</span>
+          </a>
+        </li>
+        <li id="adminMenuItem" style="display: none;">
+          <a class="sidebar-link" href="admin.html">
+            <i class="bi bi-shield-check"></i>
+            <span>Administração</span>
+          </a>
+        </li>
+      </ul>
 
-                <!-- Toggle de tema claro/escuro -->
-                <div class="px-0 py-2">
-                    <div class="form-check form-switch d-flex align-items-center">
-                        <input class="form-check-input me-2" type="checkbox" id="themeToggle">
-                        <label class="form-check-label text-white" for="themeToggle">
-                            <i class="bi bi-moon"></i>
-                            <span class="ms-2">Modo Escuro</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </nav>
+      <hr>
+
+      <!-- Configurações e Logout -->
+      <ul class="sidebar-nav list-unstyled">
+        <li>
+          <a class="sidebar-link" href="#" data-bs-toggle="modal" data-bs-target="#configModal">
+            <i class="bi bi-gear"></i>
+            <span>Configurações</span>
+          </a>
+        </li>
+      </ul>
+
+
+
+      <!-- Mobile menu toggle button -->
+      <button class="btn btn-primary d-lg-none position-fixed" style="bottom: 20px; right: 20px; z-index: 1030;"
+        onclick="document.getElementById('sidebar').classList.toggle('d-none')">
+        <i class="bi bi-list"></i>
+      </button>
+
+     
+    </nav>
 
         <!-- Conteúdo Principal -->
         <main class="content">
@@ -1274,7 +1286,23 @@
                 };
             });
         }
-
+// Função para atualizar a logo do usuário na sidebar (corrigida)
+    function updateUserLogo(avatarUrl) {
+      const sidebarLogo = document.querySelector('.sidebar-header img');
+      if (sidebarLogo && avatarUrl) {
+        sidebarLogo.src = `${avatarUrl}?t=${Date.now()}`;
+        // Preservar a imagem original e centralizá-la
+        sidebarLogo.style.borderRadius = '0'; // Remove o formato circular
+        sidebarLogo.style.width = 'auto'; // Largura automática
+        sidebarLogo.style.height = '60px'; // Altura fixa para manter proporção
+        sidebarLogo.style.maxWidth = '100%'; // Não exceder a largura do container
+        sidebarLogo.style.objectFit = 'contain'; // Manter proporções sem cortar
+        sidebarLogo.style.display = 'block';
+        sidebarLogo.style.margin = '0 auto'; // Centralizar horizontalmente
+        sidebarLogo.style.border = 'none'; // Remove bordas
+        sidebarLogo.style.boxShadow = 'none'; // Remove sombras
+      }
+    }
     </script>
     
     <!-- Modal de Configuração -->
@@ -1394,7 +1422,7 @@
         // Carregar mídias globais disponíveis
         async function carregarMidiasDisponiveis() {
             try {
-                const response = await fetch(`${buildApiUrl('/private/panels')}/${panelId}/global-medias/available`, {
+                const response = await fetch(`${buildApiUrl('/private/panels')}/${painelId}/global-medias/available`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -1434,7 +1462,7 @@
         // Carregar mídias globais associadas
         async function carregarMidiasAssociadas() {
             try {
-                const response = await fetch(`${buildApiUrl('/private/panels')}/${panelId}/global-medias`, {
+                const response = await fetch(`${buildApiUrl('/private/panels')}/${painelId}/global-medias`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -1474,26 +1502,27 @@
         // Associar mídia global ao painel
         async function associarMidiaGlobal(globalMediaId) {
             try {
-                const response = await fetch(`${buildApiUrl('/private/panels')}/${panelId}/global-medias/${globalMediaId}`, {
+                const response = await fetch(`${buildApiUrl('/private/panels')}/${painelId}/associate-global-media`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    body: JSON.stringify({ globalMediaId })
                 });
                 
                 if (response.ok) {
-                    showAlert('Mídia global associada com sucesso!', 'success');
+                    mostrarAlerta('sucesso', 'Mídia global associada com sucesso!');
                     carregarMidiasDisponiveis();
                     carregarMidiasAssociadas();
                     carregarMidias(); // Recarregar lista principal
                 } else {
                     const error = await response.json();
-                    showAlert(error.message || 'Erro ao associar mídia global', 'danger');
+                    mostrarAlerta('erro', error.message || 'Erro ao associar mídia global');
                 }
             } catch (error) {
                 console.error('Erro ao associar mídia global:', error);
-                showAlert('Erro ao associar mídia global', 'danger');
+                mostrarAlerta('erro', 'Erro ao associar mídia global');
             }
         }
         
@@ -1504,7 +1533,7 @@
             }
             
             try {
-                const response = await fetch(`${buildApiUrl('/private/panels')}/${panelId}/global-medias/${globalMediaId}`, {
+                const response = await fetch(`${buildApiUrl('/private/panels')}/${painelId}/disassociate-global-media/${globalMediaId}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -1512,17 +1541,17 @@
                 });
                 
                 if (response.ok) {
-                    showAlert('Mídia global desassociada com sucesso!', 'success');
+                    mostrarAlerta('sucesso', 'Mídia global desassociada com sucesso!');
                     carregarMidiasDisponiveis();
                     carregarMidiasAssociadas();
                     carregarMidias(); // Recarregar lista principal
                 } else {
                     const error = await response.json();
-                    showAlert(error.message || 'Erro ao desassociar mídia global', 'danger');
+                    mostrarAlerta('erro', error.message || 'Erro ao desassociar mídia global');
                 }
             } catch (error) {
                 console.error('Erro ao desassociar mídia global:', error);
-                showAlert('Erro ao desassociar mídia global', 'danger');
+                mostrarAlerta('erro', 'Erro ao desassociar mídia global');
             }
         }
         
