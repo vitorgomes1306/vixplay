@@ -118,6 +118,9 @@
                         <button id="addMidiaBtn" class="btn btn-success me-2">
                             <i class="bi bi-plus-circle"></i> Adicionar Mídia
                         </button>
+                        <button id="globalMidiasBtn" class="btn btn-primary me-2">
+                            <i class="bi bi-globe"></i> Mídias Globais
+                        </button>
                         <a href="index.html" class="btn btn-secondary me-2">
                             <i class="bi bi-arrow-left"></i> Voltar
                         </a>
@@ -361,6 +364,185 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal de Mídias Globais -->
+    <div class="modal fade" id="globalMidiasModal" tabindex="-1" aria-labelledby="globalMidiasModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="globalMidiasModalLabel">
+                        <i class="bi bi-globe"></i> Mídias Globais
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Abas para Visualizar e Gerenciar -->
+                    <ul class="nav nav-tabs" id="globalMidiasTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="available-tab" data-bs-toggle="tab"
+                                data-bs-target="#available" type="button" role="tab">
+                                <i class="bi bi-collection"></i> Disponíveis
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="associated-tab" data-bs-toggle="tab"
+                                data-bs-target="#associated" type="button" role="tab">
+                                <i class="bi bi-link-45deg"></i> Associadas
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation" id="manage-tab-li" style="display: none;">
+                            <button class="nav-link" id="manage-tab" data-bs-toggle="tab"
+                                data-bs-target="#manage" type="button" role="tab">
+                                <i class="bi bi-gear"></i> Gerenciar
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation" id="all-tab-li" style="display: none;">
+                            <button class="nav-link" id="all-tab" data-bs-toggle="tab"
+                                data-bs-target="#all" type="button" role="tab">
+                                <i class="bi bi-list-ul"></i> Todas
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content mt-3" id="globalMidiasTabContent">
+                        <!-- Aba Mídias Disponíveis -->
+                        <div class="tab-pane fade show active" id="available" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6>Mídias Globais Disponíveis para Associação</h6>
+                                <button class="btn btn-outline-primary btn-sm" onclick="carregarMidiasDisponiveis()">
+                                    <i class="bi bi-arrow-clockwise"></i> Atualizar
+                                </button>
+                            </div>
+                            <div id="midiasDisponiveisContainer" class="row">
+                                <!-- Mídias disponíveis serão carregadas aqui -->
+                            </div>
+                        </div>
+
+                        <!-- Aba Mídias Associadas -->
+                        <div class="tab-pane fade" id="associated" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6>Mídias Globais Associadas a Este Painel</h6>
+                                <button class="btn btn-outline-primary btn-sm" onclick="carregarMidiasAssociadas()">
+                                    <i class="bi bi-arrow-clockwise"></i> Atualizar
+                                </button>
+                            </div>
+                            <div id="midiasAssociadasContainer" class="row">
+                                <!-- Mídias associadas serão carregadas aqui -->
+                            </div>
+                        </div>
+
+                        <!-- Aba Gerenciar (apenas para admins) -->
+                        <div class="tab-pane fade" id="manage" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6>Gerenciar Mídias Globais</h6>
+                                <div>
+                                    <button class="btn btn-success btn-sm me-2" onclick="abrirFormularioNovaGlobalMedia()">
+                                        <i class="bi bi-plus-circle"></i> Nova Mídia Global
+                                    </button>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="carregarTodasGlobalMedias()">
+                                        <i class="bi bi-arrow-clockwise"></i> Atualizar
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Formulário para Nova Mídia Global -->
+                            <div id="formNovaGlobalMedia" class="card mb-3" style="display: none;">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Nova Mídia Global</h6>
+                                </div>
+                                <div class="card-body">
+                                    <form id="novaGlobalMediaForm">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="globalMediaTitle" class="form-label">Título *</label>
+                                                    <input type="text" class="form-control" id="globalMediaTitle" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="globalMediaCategory" class="form-label">Categoria *</label>
+                                                    <select class="form-select" id="globalMediaCategory" required>
+                                                        <option value="">Selecione a categoria</option>
+                                                        <option value="MES_SAZONAL">Mês Sazonal</option>
+                                                        <option value="NOTICIAS_LOCAIS">Notícias Locais</option>
+                                                        <option value="ESPORTES">Esportes</option>
+                                                        <option value="DICAS">Dicas</option>
+                                                        <option value="CURIOSIDADES">Curiosidades</option>
+                                                        <option value="QUIZ">Quiz</option>
+                                                        <option value="VOCE_SABIA">Você Sabia?</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="globalMediaType" class="form-label">Tipo *</label>
+                                                    <select class="form-select" id="globalMediaType" required>
+                                                        <option value="">Selecione o tipo</option>
+                                                        <option value="PHOTO">Foto</option>
+                                                        <option value="VIDEO">Vídeo</option>
+                                                        <option value="RSS">RSS</option>
+                                                        <option value="WEATHER">Clima</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-8">
+                                                <div class="mb-3">
+                                                    <label for="globalMediaUrl" class="form-label">URL *</label>
+                                                    <input type="url" class="form-control" id="globalMediaUrl" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="globalMediaDuration" class="form-label">Duração (segundos)</label>
+                                                    <input type="number" class="form-control" id="globalMediaDuration" min="1">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="globalMediaDescription" class="form-label">Descrição</label>
+                                            <textarea class="form-control" id="globalMediaDescription" rows="2"></textarea>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="bi bi-check-circle"></i> Criar Mídia Global
+                                            </button>
+                                            <button type="button" class="btn btn-secondary" onclick="cancelarNovaGlobalMedia()">
+                                                <i class="bi bi-x-circle"></i> Cancelar
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <div id="todasGlobalMidiasContainer" class="row">
+                                <!-- Todas as mídias globais serão carregadas aqui -->
+                            </div>
+                        </div>
+                        
+                        <!-- Aba Todas as Mídias Globais -->
+                        <div class="tab-pane fade" id="all" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6>Todas as Mídias Globais</h6>
+                                <button class="btn btn-outline-primary btn-sm" onclick="carregarTodasGlobalMedias()">
+                                    <i class="bi bi-arrow-clockwise"></i> Atualizar
+                                </button>
+                            </div>
+                            <div id="todasGlobalMidiasContainer" class="row">
+                                <!-- Todas as mídias globais serão carregadas aqui -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -466,10 +648,12 @@
                 const isVideo = midia.type?.toUpperCase() === 'VIDEO'; // Verifica se o tipo é VIDEO
                 const isAudio = midia.type?.toUpperCase() === 'AUDIO'; // Verifica se o tipo é AUDIO
                 const isDocument = midia.type?.toUpperCase() === 'DOCUMENT'; // Verifica se o tipo é DOCUMENTO
+                const isGlobal = midia.isGlobal || false; // Verifica se é mídia global
 
                 return `
             <div class="col-md-6 col-lg-4" id="midia-${midia.id}">
-                <div class="card h-100">
+                <div class="card h-100 ${isGlobal ? 'border-success' : ''}">
+                    ${isGlobal ? '<div class="card-header bg-success text-white"><small><i class="bi bi-globe"></i> Mídia Global</small></div>' : ''}
                     <div class="card-body">
                         <h6 class="card-title">${midia.title || 'Sem título'}</h6>
                         <div class="mb-2">
@@ -509,16 +693,22 @@
                             <small class="text-muted">
                                 Tipo: ${midia.type || 'N/A'}<br>
                                 ID: ${midia.id}
+                                ${isGlobal ? '<br><span class="text-success">Mídia Global</span>' : ''}
                             </small>
                         </p>
                     </div>
                     <div class="card-footer">
-                        <button class="btn btn-sm btn-primary me-2" onclick="editarMidia(${midia.id})">
-                            <i class="bi bi-pencil"></i> Editar
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="excluirMidia(${midia.id}, '${(midia.title || 'esta mídia').replace(/'/g, "\'")}')">
-                            <i class="bi bi-trash"></i> Excluir
-                        </button>
+                        ${isGlobal 
+                            ? `<button class="btn btn-sm btn-warning" onclick="desassociarMidiaGlobal(${midia.id})">
+                                   <i class="bi bi-unlink"></i> Desassociar
+                               </button>`
+                            : `<button class="btn btn-sm btn-primary me-2" onclick="editarMidia(${midia.id})">
+                                   <i class="bi bi-pencil"></i> Editar
+                               </button>
+                               <button class="btn btn-sm btn-danger" onclick="excluirMidia(${midia.id}, '${(midia.title || 'esta mídia').replace(/'/g, "\'")}')">
+                                   <i class="bi bi-trash"></i> Excluir
+                               </button>`
+                        }
                     </div>
                 </div>
             </div>
@@ -530,23 +720,41 @@
             try {
                 console.log('Carregando mídias do painel:', painelId);
 
-                const resposta = await fetch(`${buildApiUrl('/private/panel')}/${painelId}/midias`, {
+                // Carregar mídias normais do painel
+                const respostaMidias = await fetch(`${buildApiUrl('/private/panel')}/${painelId}/midias`, {
                     headers: {
                         "Authorization": "Bearer " + token
                     }
                 });
 
-                if (!resposta.ok) {
-                    if (resposta.status === 404) {
-                        renderizarMidias([]);
-                        return;
-                    }
-                    throw new Error(`Erro ${resposta.status}: ${resposta.statusText}`);
+                let midiasNormais = [];
+                if (respostaMidias.ok) {
+                    midiasNormais = await respostaMidias.json();
+                } else if (respostaMidias.status !== 404) {
+                    throw new Error(`Erro ${respostaMidias.status}: ${respostaMidias.statusText}`);
                 }
 
-                const midias = await resposta.json();
-                console.log('Mídias carregadas:', midias);
-                renderizarMidias(midias);
+                // Carregar mídias globais associadas ao painel
+                const respostaGlobais = await fetch(`${buildApiUrl('/private/panels')}/${painelId}/global-medias`, {
+                    headers: {
+                        "Authorization": "Bearer " + token
+                    }
+                });
+
+                let midiasGlobais = [];
+                if (respostaGlobais.ok) {
+                    midiasGlobais = await respostaGlobais.json();
+                    // Marcar mídias globais para diferenciá-las na interface
+                    midiasGlobais = midiasGlobais.map(media => ({
+                        ...media,
+                        isGlobal: true
+                    }));
+                }
+
+                // Combinar todas as mídias
+                const todasMidias = [...midiasNormais, ...midiasGlobais];
+                console.log('Mídias carregadas:', todasMidias);
+                renderizarMidias(todasMidias);
 
             } catch (err) {
                 console.error('Erro ao carregar mídias:', err);
@@ -1147,6 +1355,290 @@
         // Event listener para o toggle
         if (themeToggleModal) {
             themeToggleModal.addEventListener('change', toggleTheme);
+        }
+        
+        // Mídias Globais
+        const globalMidiasBtn = document.getElementById('globalMidiasBtn');
+        const globalMidiasModal = new bootstrap.Modal(document.getElementById('globalMidiasModal'));
+        const globalMidiasForm = document.getElementById('globalMidiasForm');
+        const globalMidiasTabContent = document.getElementById('globalMidiasTabContent');
+        
+        // Verificar se o usuário é admin
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        const isAdmin = userData.isAdmin || false;
+        
+        // Mostrar/ocultar abas de administrador baseado no status de admin
+        const manageTabLi = document.getElementById('manage-tab-li');
+        const allTabLi = document.getElementById('all-tab-li');
+        
+        if (isAdmin) {
+            if (manageTabLi) manageTabLi.style.display = 'block';
+            if (allTabLi) allTabLi.style.display = 'block';
+        } else {
+            if (manageTabLi) manageTabLi.style.display = 'none';
+            if (allTabLi) allTabLi.style.display = 'none';
+        }
+        
+        // Abrir modal de mídias globais
+        if (globalMidiasBtn) {
+            globalMidiasBtn.addEventListener('click', function() {
+                globalMidiasModal.show();
+                carregarMidiasDisponiveis();
+                carregarMidiasAssociadas();
+                if (isAdmin) {
+                    carregarTodasGlobalMedias();
+                }
+            });
+        }
+        
+        // Carregar mídias globais disponíveis
+        async function carregarMidiasDisponiveis() {
+            try {
+                const response = await fetch(`${buildApiUrl('/private/panels')}/${panelId}/global-medias/available`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const medias = await response.json();
+                    const container = document.getElementById('midiasDisponiveisList');
+                    
+                    if (medias.length === 0) {
+                        container.innerHTML = '<p class="text-muted">Nenhuma mídia global disponível.</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = medias.map(media => `
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <h6 class="card-title">${media.title}</h6>
+                                <p class="card-text text-muted">${media.description || 'Sem descrição'}</p>
+                                <small class="text-muted">Tipo: ${media.type} | Duração: ${media.duration}s</small>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-primary" onclick="associarMidiaGlobal(${media.id})">
+                                        Associar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    console.error('Erro ao carregar mídias disponíveis');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar mídias disponíveis:', error);
+            }
+        }
+        
+        // Carregar mídias globais associadas
+        async function carregarMidiasAssociadas() {
+            try {
+                const response = await fetch(`${buildApiUrl('/private/panels')}/${panelId}/global-medias`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const medias = await response.json();
+                    const container = document.getElementById('midiasAssociadasList');
+                    
+                    if (medias.length === 0) {
+                        container.innerHTML = '<p class="text-muted">Nenhuma mídia global associada.</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = medias.map(media => `
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <h6 class="card-title">${media.title}</h6>
+                                <p class="card-text text-muted">${media.description || 'Sem descrição'}</p>
+                                <small class="text-muted">Tipo: ${media.type} | Duração: ${media.duration}s</small>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-danger" onclick="desassociarMidiaGlobal(${media.id})">
+                                        Desassociar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    console.error('Erro ao carregar mídias associadas');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar mídias associadas:', error);
+            }
+        }
+        
+        // Associar mídia global ao painel
+        async function associarMidiaGlobal(globalMediaId) {
+            try {
+                const response = await fetch(`${buildApiUrl('/private/panels')}/${panelId}/global-medias/${globalMediaId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    showAlert('Mídia global associada com sucesso!', 'success');
+                    carregarMidiasDisponiveis();
+                    carregarMidiasAssociadas();
+                    carregarMidias(); // Recarregar lista principal
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Erro ao associar mídia global', 'danger');
+                }
+            } catch (error) {
+                console.error('Erro ao associar mídia global:', error);
+                showAlert('Erro ao associar mídia global', 'danger');
+            }
+        }
+        
+        // Desassociar mídia global do painel
+        async function desassociarMidiaGlobal(globalMediaId) {
+            if (!confirm('Tem certeza que deseja desassociar esta mídia global?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${buildApiUrl('/private/panels')}/${panelId}/global-medias/${globalMediaId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    showAlert('Mídia global desassociada com sucesso!', 'success');
+                    carregarMidiasDisponiveis();
+                    carregarMidiasAssociadas();
+                    carregarMidias(); // Recarregar lista principal
+                } else {
+                    const error = await response.json();
+                    showAlert(error.message || 'Erro ao desassociar mídia global', 'danger');
+                }
+            } catch (error) {
+                console.error('Erro ao desassociar mídia global:', error);
+                showAlert('Erro ao desassociar mídia global', 'danger');
+            }
+        }
+        
+        // Funções para gerenciar formulário de nova mídia global
+        function abrirFormularioNovaGlobalMedia() {
+            if (!isAdmin) {
+                showAlert('Apenas administradores podem criar mídias globais', 'danger');
+                return;
+            }
+            document.getElementById('formNovaGlobalMedia').style.display = 'block';
+        }
+        
+        function cancelarNovaGlobalMedia() {
+            document.getElementById('formNovaGlobalMedia').style.display = 'none';
+            document.getElementById('novaGlobalMediaForm').reset();
+        }
+        
+        // Criar nova mídia global (apenas para admins)
+        const novaGlobalMediaForm = document.getElementById('novaGlobalMediaForm');
+        if (novaGlobalMediaForm) {
+            novaGlobalMediaForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                if (!isAdmin) {
+                    showAlert('Apenas administradores podem criar mídias globais', 'danger');
+                    return;
+                }
+                
+                const data = {
+                    title: document.getElementById('globalMediaTitle').value,
+                    category: document.getElementById('globalMediaCategory').value,
+                    type: document.getElementById('globalMediaType').value,
+                    url: document.getElementById('globalMediaUrl').value,
+                    duration: parseInt(document.getElementById('globalMediaDuration').value) || null,
+                    description: document.getElementById('globalMediaDescription').value || null
+                };
+                
+                try {
+                    const response = await fetch(`${buildApiUrl('/private/global-medias')}`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    if (response.ok) {
+                        showAlert('Mídia global criada com sucesso!', 'success');
+                        this.reset();
+                        cancelarNovaGlobalMedia();
+                        carregarMidiasDisponiveis();
+                        carregarTodasGlobalMedias();
+                    } else {
+                        const error = await response.json();
+                        showAlert(error.message || 'Erro ao criar mídia global', 'danger');
+                    }
+                } catch (error) {
+                    console.error('Erro ao criar mídia global:', error);
+                    showAlert('Erro ao criar mídia global', 'danger');
+                }
+            });
+        }
+        
+        // Carregar todas as mídias globais para gerenciamento
+        async function carregarTodasGlobalMedias() {
+            if (!isAdmin) return;
+            
+            try {
+                const response = await fetch(`${buildApiUrl('/private/global-medias')}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const medias = await response.json();
+                    const container = document.getElementById('todasGlobalMidiasContainer');
+                    
+                    if (medias.length === 0) {
+                        container.innerHTML = '<p class="text-muted">Nenhuma mídia global encontrada.</p>';
+                        return;
+                    }
+                    
+                    const categoryLabels = {
+                        'MES_SAZONAL': 'Mês Sazonal',
+                        'NOTICIAS_LOCAIS': 'Notícias Locais',
+                        'ESPORTES': 'Esportes',
+                        'DICAS': 'Dicas',
+                        'CURIOSIDADES': 'Curiosidades',
+                        'QUIZ': 'Quiz',
+                        'VOCE_SABIA': 'Você Sabia?'
+                    };
+                    
+                    container.innerHTML = medias.map(media => `
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">${media.title}</h6>
+                                    <p class="card-text text-muted">${media.description || 'Sem descrição'}</p>
+                                    <div class="mb-2">
+                                        <span class="badge bg-primary me-1">${categoryLabels[media.category] || media.category}</span>
+                                        <span class="badge bg-secondary me-1">${media.type}</span>
+                                        <span class="badge ${media.active ? 'bg-success' : 'bg-danger'}">${media.active ? 'Ativa' : 'Inativa'}</span>
+                                    </div>
+                                    <small class="text-muted">Duração: ${media.duration || 'N/A'}s</small>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    console.error('Erro ao carregar todas as mídias globais');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar todas as mídias globais:', error);
+            }
         }
         
         // Logout

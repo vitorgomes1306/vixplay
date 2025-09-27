@@ -432,13 +432,25 @@
                         <small class="text-muted text-black">${stats.campaigns.active} ativas</small>
                     </div>
                 </div>
+                <div class="col-md-2">
+                    <a href="midias_globais_admin.html" class="text-decoration-none">
+                        <div class="stats-card text-center">
+                            <div class="stats-icon mx-auto mb-2" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                            <h4 class="text-black">Admin</h4>
+                            <p class="mb-0 text-black">Mídias Globais</p>
+                            <small class="text-muted text-black">gerenciar</small>
+                        </div>
+                    </a>
+                </div>
             `;
         }
 
         async function loadUsers() {
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('http://45.172.160.51:4000/public/admin/users', {
+                const response = await fetch('/public/admin/users', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

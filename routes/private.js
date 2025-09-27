@@ -5,12 +5,20 @@ import jwt from "jsonwebtoken"; // Importa o jsonwebtoken para gerar tokens de a
 import nodemailer from "nodemailer";
 
 // Middleware de autenticação
+// Blacklist de tokens para logout (declarada no topo para ser acessível)
+const tokenBlacklist = new Set();
+
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
     return res.status(401).json({ error: "Token de acesso requerido" });
+  }
+
+  // Verifica se o token está na blacklist
+  if (tokenBlacklist.has(token)) {
+    return res.status(401).json({ error: "Token foi invalidado (logout)" });
   }
 
   jwt.verify(
@@ -20,7 +28,6 @@ function authenticateToken(req, res, next) {
       if (err) {
         console.error("Erro na verificação do token:", err);
         return res.status(403).json({ error: "Token inválido" });
-        IMAGE;
       }
       req.user = user;
       next();
@@ -1359,6 +1366,53 @@ const upload = multer({
   limits: {
     fileSize: 100 * 1024 * 1024, // 100MB
   },
+});
+
+// Rota para upload de arquivos de mídias globais (apenas retorna URL)
+router.post("/upload-global-media", authenticateToken, upload.single("file"), async (req, res) => {
+  try {
+    console.log("Arquivo recebido para mídia global:", req.file);
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo foi enviado.' });
+    }
+
+    // Mapeamento de mimetypes para MediaType enum do Prisma
+    const mimeToMediaType = {
+      "image/jpeg": "PHOTO",
+      "image/jpg": "PHOTO",
+      "image/png": "PHOTO",
+      "image/gif": "PHOTO",
+      "video/mp4": "VIDEO",
+      "video/avi": "VIDEO",
+      "video/mov": "VIDEO",
+      "video/wmv": "VIDEO",
+    };
+
+    const type = mimeToMediaType[req.file.mimetype];
+    if (!type) {
+      return res
+        .status(400)
+        .json({ error: "O tipo de arquivo enviado não é suportado." });
+    }
+
+    // Gerar URL pública do arquivo
+    const relativeFilePath = `/uploads/${req.file.filename}`;
+    const publicUrl = `${process.env.BASE_URL || 'http://localhost:4000'}${relativeFilePath}`;
+
+    console.log("URL pública gerada para mídia global:", publicUrl);
+
+    // Retorna apenas a URL do arquivo
+    return res.status(200).json({
+      message: "Upload realizado com sucesso!",
+      url: publicUrl,
+      type: type,
+      filename: req.file.filename
+    });
+  } catch (error) {
+    console.error("❌ Erro ao fazer upload de mídia global:", error);
+    return res.status(500).json({ error: "Erro ao fazer upload do arquivo." });
+  }
 });
 
 // Rota para upload e criação de mídia
@@ -3582,6 +3636,391 @@ router.post("/contact", async (req, res) => {
       success: false,
       message: 'Erro interno do servidor. Tente novamente mais tarde.'
     });
+  }
+});
+
+// ==================== ROTAS PARA MÍDIAS GLOBAIS ====================
+
+// Middleware para verificar se o usuário é admin
+async function checkAdminUser(req, res, next) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { isAdmin: true }
+    });
+    
+    if (!user || !user.isAdmin) {
+      return res.status(403).json({ 
+        error: 'Acesso negado. Apenas usuários administradores podem gerenciar mídias globais.' 
+      });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Erro ao verificar permissões de admin:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+}
+
+// Listar todas as mídias globais (apenas admin)
+router.get('/global-medias', authenticateToken, checkAdminUser, async (req, res) => {
+  try {
+    // Primeiro, desativar mídias expiradas
+    const now = new Date();
+    await prisma.globalMedias.updateMany({
+      where: {
+        dateExpire: {
+          lte: now
+        },
+        active: true
+      },
+      data: {
+        active: false
+      }
+    });
+    
+    const globalMedias = await prisma.globalMedias.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json(globalMedias);
+  } catch (error) {
+    console.error('Erro ao listar mídias globais:', error);
+    res.status(500).json({ error: 'Erro ao listar mídias globais' });
+  }
+});
+
+// Criar nova mídia global (apenas admin)
+router.post('/global-medias', authenticateToken, checkAdminUser, async (req, res) => {
+  try {
+    const { title, url, type, duration, description, category, active, dateExpire } = req.body;
+    
+    if (!title || !url || !type || !category) {
+      return res.status(400).json({ 
+        error: 'Título, URL, tipo e categoria são obrigatórios' 
+      });
+    }
+    
+    const globalMedia = await prisma.globalMedias.create({
+      data: {
+        title,
+        url,
+        type,
+        category,
+        duration: duration ? parseInt(duration) : null,
+        description,
+        dateExpire: dateExpire ? new Date(dateExpire) : null,
+        active: active !== undefined ? active : true
+      }
+    });
+    
+    res.status(201).json(globalMedia);
+  } catch (error) {
+    console.error('Erro ao criar mídia global:', error);
+    res.status(500).json({ error: 'Erro ao criar mídia global' });
+  }
+});
+
+// Buscar mídia global por ID (apenas admin)
+router.get('/global-medias/:id', authenticateToken, checkAdminUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const globalMedia = await prisma.globalMedias.findUnique({
+      where: { id: parseInt(id) }
+    });
+    
+    if (!globalMedia) {
+      return res.status(404).json({ error: 'Mídia global não encontrada' });
+    }
+    
+    res.json(globalMedia);
+  } catch (error) {
+    console.error('Erro ao buscar mídia global:', error);
+    res.status(500).json({ error: 'Erro ao buscar mídia global' });
+  }
+});
+
+// Atualizar mídia global (apenas admin)
+router.put('/global-medias/:id', authenticateToken, checkAdminUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, url, type, duration, description, category, active, dateExpire } = req.body;
+    
+    const globalMedia = await prisma.globalMedias.update({
+      where: { id: parseInt(id) },
+      data: {
+        ...(title && { title }),
+        ...(url && { url }),
+        ...(type && { type }),
+        ...(category && { category }),
+        ...(duration !== undefined && { duration: duration ? parseInt(duration) : null }),
+        ...(description !== undefined && { description }),
+        ...(dateExpire !== undefined && { dateExpire: dateExpire ? new Date(dateExpire) : null }),
+        ...(active !== undefined && { active })
+      }
+    });
+    
+    res.json(globalMedia);
+  } catch (error) {
+    console.error('Erro ao atualizar mídia global:', error);
+    res.status(500).json({ error: 'Erro ao atualizar mídia global' });
+  }
+});
+
+// Excluir mídia global (apenas admin)
+router.delete('/global-medias/:id', authenticateToken, checkAdminUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Primeiro, remover todas as associações com painéis
+    await prisma.panelGlobalMedias.deleteMany({
+      where: { globalMediaId: parseInt(id) }
+    });
+    
+    // Depois, excluir a mídia global
+    await prisma.globalMedias.delete({
+      where: { id: parseInt(id) }
+    });
+    
+    res.json({ message: 'Mídia global excluída com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir mídia global:', error);
+    res.status(500).json({ error: 'Erro ao excluir mídia global' });
+  }
+});
+
+// ==================== ROTAS PARA ASSOCIAÇÃO DE MÍDIAS GLOBAIS ====================
+
+// Listar mídias globais disponíveis para associação (qualquer usuário autenticado)
+router.get('/available-global-medias', authenticateToken, async (req, res) => {
+  try {
+    // Primeiro, desativar mídias expiradas
+    const now = new Date();
+    await prisma.globalMedias.updateMany({
+      where: {
+        dateExpire: {
+          lte: now
+        },
+        active: true
+      },
+      data: {
+        active: false
+      }
+    });
+    
+    const globalMedias = await prisma.globalMedias.findMany({
+      where: { active: true },
+      select: {
+        id: true,
+        title: true,
+        url: true,
+        type: true,
+        category: true,
+        duration: true,
+        description: true,
+        createdAt: true,
+        dateExpire: true
+      },
+      orderBy: { title: 'asc' }
+    });
+    
+    res.json(globalMedias);
+  } catch (error) {
+    console.error('Erro ao listar mídias globais disponíveis:', error);
+    res.status(500).json({ error: 'Erro ao listar mídias globais disponíveis' });
+  }
+});
+
+// Associar mídia global a um painel
+router.post('/panels/:panelId/associate-global-media', authenticateToken, async (req, res) => {
+  try {
+    const { panelId } = req.params;
+    const { globalMediaId } = req.body;
+    
+    // Verificar se o painel pertence ao usuário
+    const panel = await prisma.panel.findFirst({
+      where: {
+        id: parseInt(panelId),
+        userId: req.user.id
+      }
+    });
+    
+    if (!panel) {
+      return res.status(404).json({ error: 'Painel não encontrado ou não pertence ao usuário' });
+    }
+    
+    // Verificar se a mídia global existe
+    const globalMedia = await prisma.globalMedias.findUnique({
+      where: { id: parseInt(globalMediaId) }
+    });
+    
+    if (!globalMedia) {
+      return res.status(404).json({ error: 'Mídia global não encontrada' });
+    }
+    
+    // Verificar se a associação já existe
+    const existingAssociation = await prisma.panelGlobalMedias.findUnique({
+      where: {
+        panelId_globalMediaId: {
+          panelId: parseInt(panelId),
+          globalMediaId: parseInt(globalMediaId)
+        }
+      }
+    });
+    
+    if (existingAssociation) {
+      return res.status(400).json({ error: 'Mídia global já está associada a este painel' });
+    }
+    
+    // Criar a associação
+    const association = await prisma.panelGlobalMedias.create({
+      data: {
+        panelId: parseInt(panelId),
+        globalMediaId: parseInt(globalMediaId)
+      }
+    });
+    
+    res.status(201).json({ message: 'Mídia global associada com sucesso', association });
+  } catch (error) {
+    console.error('Erro ao associar mídia global:', error);
+    res.status(500).json({ error: 'Erro ao associar mídia global' });
+  }
+});
+
+// Desassociar mídia global de um painel
+router.delete('/panels/:panelId/disassociate-global-media/:globalMediaId', authenticateToken, async (req, res) => {
+  try {
+    const { panelId, globalMediaId } = req.params;
+    
+    // Verificar se o painel pertence ao usuário
+    const panel = await prisma.panel.findFirst({
+      where: {
+        id: parseInt(panelId),
+        userId: req.user.id
+      }
+    });
+    
+    if (!panel) {
+      return res.status(404).json({ error: 'Painel não encontrado ou não pertence ao usuário' });
+    }
+    
+    // Remover a associação
+    await prisma.panelGlobalMedias.delete({
+      where: {
+        panelId_globalMediaId: {
+          panelId: parseInt(panelId),
+          globalMediaId: parseInt(globalMediaId)
+        }
+      }
+    });
+    
+    res.json({ message: 'Mídia global desassociada com sucesso' });
+  } catch (error) {
+    console.error('Erro ao desassociar mídia global:', error);
+    res.status(500).json({ error: 'Erro ao desassociar mídia global' });
+  }
+});
+
+// Listar mídias globais associadas a um painel
+router.get('/panels/:panelId/global-medias', authenticateToken, async (req, res) => {
+  try {
+    const { panelId } = req.params;
+    
+    // Verificar se o painel pertence ao usuário
+    const panel = await prisma.panel.findFirst({
+      where: {
+        id: parseInt(panelId),
+        userId: req.user.id
+      }
+    });
+    
+    if (!panel) {
+      return res.status(404).json({ error: 'Painel não encontrado ou não pertence ao usuário' });
+    }
+    
+    const globalMedias = await prisma.panelGlobalMedias.findMany({
+      where: { panelId: parseInt(panelId) },
+      include: {
+        globalMedia: {
+          select: {
+            id: true,
+            title: true,
+            url: true,
+            type: true,
+            duration: true,
+            description: true
+          }
+        }
+      }
+    });
+    
+    const result = globalMedias.map(item => ({
+      ...item.globalMedia,
+      associatedAt: item.associatedAt
+    }));
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Erro ao listar mídias globais do painel:', error);
+    res.status(500).json({ error: 'Erro ao listar mídias globais do painel' });
+  }
+});
+
+// Rota para logout
+router.post('/logout', authenticateToken, async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (token) {
+      // Adiciona o token à blacklist
+      tokenBlacklist.add(token);
+    }
+    
+    res.json({ message: 'Logout realizado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao fazer logout:', error);
+    res.status(500).json({ error: 'Erro ao fazer logout' });
+  }
+});
+
+// Rota para buscar painéis do usuário (versão em inglês)
+router.get('/panels', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.userId; // ID do usuário obtido do middleware authenticateToken
+
+    // Busca os painéis do usuário
+    const panels = await prisma.panel.findMany({
+      where: {
+        userId: userId,
+      },
+      select: {
+        id: true,
+        name: true,
+        active: true,
+        description: true,
+        showLottery: true,
+        lotteryFrequency: true,
+        showCoins: true,
+        coinsFrequency: true,
+        showCustomScreen: true,
+        customScreenFrequency: true,
+        customScreenContent: true,
+        type: true,
+        showNews: true,
+        newsFrequency: true,
+        showWeather: true,
+        weatherFrequency: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    res.status(200).json(panels);
+  } catch (err) {
+    console.error('Erro ao buscar painéis:', err);
+    res.status(500).json({ error: 'Erro ao buscar painéis' });
   }
 });
 

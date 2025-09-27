@@ -115,6 +115,7 @@ model Panel {
   medias  PanelMedias[]
   devices Device[]
   Media   Medias[]
+  globalMedias PanelGlobalMedias[]
 
   user User @relation(fields: [userId], references: [id])
 
@@ -201,6 +202,36 @@ model CustomScreen {
   @@map("CustomScreen")
 }
 
+model GlobalMedias {
+  id         Int           @id @default(autoincrement())
+  title      String
+  url        String
+  type       MediaType
+  category   MediaCategory @default(DICAS)
+  duration   Int?
+  description String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  active     Boolean       @default(true)
+  dateExpire DateTime?
+  
+  // Relação many-to-many com painéis
+  panels     PanelGlobalMedias[]
+
+  @@map("GlobalMedia")
+}
+
+model PanelGlobalMedias {
+  panelId       Int
+  globalMediaId Int
+  panel         Panel        @relation(fields: [panelId], references: [id], onDelete: Cascade)
+  globalMedia   GlobalMedias @relation(fields: [globalMediaId], references: [id], onDelete: Cascade)
+  associatedAt  DateTime     @default(now())
+
+  @@id([panelId, globalMediaId])
+  @@map("PanelGlobalMedia")
+}
+
 enum PanelType {
   FULL_SCREEN
   DIVIDED
@@ -211,6 +242,16 @@ enum MediaType {
   VIDEO
   RSS
   WEATHER
+}
+
+enum MediaCategory {
+  MES_SAZONAL
+  NOTICIAS_LOCAIS
+  ESPORTES
+  DICAS
+  CURIOSIDADES
+  QUIZ
+  VOCE_SABIA
 }
 
 enum DeviceType {
